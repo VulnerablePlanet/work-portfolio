@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber';
 import { StatsGl } from '@react-three/drei';
 import { Perf } from 'r3f-perf';
 import { resolveQualityProfile } from '@/app/bootstrap/quality-tier';
+import { updateBootStatus } from '@/app/bootstrap/render-boot-status';
 import { FocusCameraRig } from '@/camera/FocusCameraRig';
 import '@/scene/three-catalog';
 import { createRenderer } from '@/engine/renderer/renderer-factory';
@@ -44,6 +45,10 @@ export function ExperienceCanvas() {
             onBackendResolved: (backend) => {
               setRendererBackend(backend);
               setBootstrapPhase('ready');
+              updateBootStatus({
+                phase: 'ready',
+                message: `Renderer ${backend.toUpperCase()} listo.`,
+              });
             },
           }).catch((error: unknown) => {
             const message =
@@ -53,6 +58,12 @@ export function ExperienceCanvas() {
 
             setBootError(message);
             setBootstrapPhase('failed');
+            updateBootStatus({
+              phase: 'failed',
+              message: 'No se pudo iniciar la experiencia 3D.',
+              detail: message,
+              allowFallback: true,
+            });
             throw error;
           })
         }

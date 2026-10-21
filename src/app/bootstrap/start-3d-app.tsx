@@ -1,7 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from '@/app/App';
-import { updateBootStatus } from '@/app/bootstrap/render-boot-status';
 import { useAppStore } from '@/store/useAppStore';
 import type { GraphicsCapabilities } from '@/types/capabilities';
 
@@ -26,9 +25,4 @@ export async function start3DApp(capabilities: GraphicsCapabilities) {
       <App />
     </StrictMode>,
   );
-
-  updateBootStatus({
-    phase: 'ready',
-    message: 'Shell 3D lista.',
-  });
 }

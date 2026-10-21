@@ -1,6 +1,7 @@
-﻿import { requestGamePointerLock } from '@/player/pointer-lock-events';
+import { requestGamePointerLock } from '@/player/pointer-lock-events';
 import { resolveQualityProfile } from '@/app/bootstrap/quality-tier';
 import { useAppStore } from '@/store/useAppStore';
+import { useInteractionStore } from '@/store/useInteractionStore';
 import { useProgressStore } from '@/store/useProgressStore';
 import { PORTFOLIO_OBJECTS } from '@/content/interactive-objects';
 
@@ -20,6 +21,13 @@ export function MainMenu() {
   const toggleDebugHud = useAppStore((state) => state.toggleDebugHud);
   const visitedObjectIds = useProgressStore((state) => state.visitedObjectIds);
   const resetProgress = useProgressStore((state) => state.resetProgress);
+  const activeContent = useInteractionStore((state) => state.activeContent);
+
+  // Al leer un objeto se sale del pointer lock y el juego queda en pausa.
+  // El panel de lectura debe tener prioridad sobre el menú de pausa.
+  if (activeContent) {
+    return null;
+  }
 
   if ((pointerLockActive || fallbackLookActive) && !gamePaused) {
     return null;

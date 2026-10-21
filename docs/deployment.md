@@ -1,4 +1,4 @@
-﻿# Fase 7 — despliegue y CI/CD
+# Fase 7 — despliegue y CI/CD
 
 ## Estado
 
@@ -41,7 +41,7 @@ Para este proyecto, recomiendo Vercel o Netlify primero:
 
 ## Variables y secretos
 
-Todavía no se agregaron secretos de despliegue porque el repositorio no está inicializado ni conectado a un remoto.
+El repositorio ya está inicializado localmente en la rama `main`, pero todavía no tiene remoto. Tampoco se agregaron secretos de despliegue porque no hay proveedor conectado.
 
 Cuando exista remoto, el siguiente paso será elegir proveedor y agregar el workflow de deploy correspondiente.
 

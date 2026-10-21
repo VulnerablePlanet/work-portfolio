@@ -1,10 +1,10 @@
-﻿# work-portfolio
+# work-portfolio
 
 Portfolio 3D profesional construido con Vite, TypeScript, React, React Three Fiber, Three.js WebGPU/WebGL2, Rapier, Zustand y GSAP.
 
 ## Estado actual
 
-Estamos en **Fase 7 scaffold de CI/CD**, no en producto visual final. La base técnica existe y se valida con TypeScript, pero aún faltan assets reales GLB/KTX2, optimización profunda y validación visual final en hardware real.
+Estamos en **Fase 7 scaffold de CI/CD**, no en producto visual final. El repositorio local ya está inicializado (rama `main`), pero todavía no tiene remoto. La base técnica existe y se valida con TypeScript, pero aún faltan assets reales GLB/KTX2, optimización profunda y validación visual final en hardware real.
 
 > Importante: en el estado actual **no existe backend**. Este repositorio es una aplicación frontend 3D servida por Vite. Si más adelante se agrega un backend/API, deberá documentarse como un servicio separado.
 
@@ -46,7 +46,7 @@ Si Vite usa otro puerto porque `4173` está ocupado, la terminal mostrará la UR
 
 Actualmente **no hay backend que iniciar**.
 
-No existe carpeta `backend/`, servidor API, base de datos, Docker Compose ni proceso Node/Express/Nest separado. Todo lo que ves en la app viene del frontend y de archivos locales dentro de `src/`, `public/` y `fallback.html`.
+No existe carpeta `backend/`, servidor API, base de datos, Docker Compose ni proceso Node/Express/Nest separado. Todo lo que ves en la app viene del frontend y de archivos locales dentro de `src/` y `public/`.
 
 Por eso, para correr el proyecto hoy solo necesitas:
 
@@ -117,7 +117,7 @@ Con el frontend corriendo:
 - Mini mapa SVG y progreso persistido con Zustand.
 - Feature flags centralizados.
 - Scaffold de assets progresivos: `placeholder -> low -> high`.
-- Fallback estático en `fallback.html`.
+- Fallback estático en `public/fallback.html` (Vite lo copia a `dist/`).
 - Service Worker básico para producción.
 - CI con GitHub Actions y Lighthouse CI.
 
