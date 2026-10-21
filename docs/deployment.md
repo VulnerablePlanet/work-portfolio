@@ -43,9 +43,9 @@ Para este proyecto, recomiendo Vercel o Netlify primero:
 
 ## Variables y secretos
 
-El repositorio ya está inicializado localmente en la rama `main`, pero todavía no tiene remoto. Tampoco se agregaron secretos de despliegue porque no hay proveedor conectado.
+El repositorio está publicado en GitHub (`VulnerablePlanet/work-portfolio`) con CI en la rama `main`. Todavía no hay proveedor de hosting ni secretos de despliegue conectados.
 
-Cuando exista remoto, el siguiente paso será elegir proveedor y agregar el workflow de deploy correspondiente.
+El siguiente paso será elegir proveedor de hosting y agregar el workflow de deploy correspondiente.
 
 ## Comandos locales seguros
 

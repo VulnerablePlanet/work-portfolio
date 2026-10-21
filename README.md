@@ -1,10 +1,12 @@
 # work-portfolio
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Portfolio 3D profesional construido con Vite, TypeScript, React, React Three Fiber, Three.js WebGPU/WebGL2, Rapier, Zustand y GSAP.
 
 ## Estado actual
 
-Estamos en **Fase 7 scaffold de CI/CD**, no en producto visual final. El repositorio local ya está inicializado (rama `main`), pero todavía no tiene remoto. La base técnica existe y se valida con TypeScript, pero aún faltan assets reales GLB/KTX2, optimización profunda y validación visual final en hardware real.
+Estamos en **Fase 7 scaffold de CI/CD**, no en producto visual final. El repositorio está publicado en GitHub (rama `main`) y la CI corre en cada push. La base técnica existe y se valida con TypeScript, pero aún faltan assets reales GLB/KTX2, optimización profunda y validación visual final en hardware real.
 
 > Importante: en el estado actual **no existe backend**. Este repositorio es una aplicación frontend 3D servida por Vite. Si más adelante se agrega un backend/API, deberá documentarse como un servicio separado.
 
@@ -140,5 +142,11 @@ Archivos relevantes:
 4. Post-processing final compatible con la estrategia de renderer.
 5. Validación manual en navegador y hardware real.
 6. Elegir hosting real: Vercel, Netlify o GitHub Pages.
-7. Conectar repositorio remoto para que CI/CD corra realmente.
+7. Configurar branch protection y deploy automático en el hosting elegido.
 8. Agregar backend solo si aparece una necesidad real: CMS, analytics propio, autenticación o API dinámica.
+
+## Licencia
+
+Distribuido bajo la [licencia MIT](LICENSE). Puedes usar, copiar, modificar, fusionar, publicar, distribuir, sublicenciar y/o vender copias del proyecto, siempre que conserves el aviso de copyright y la licencia.
+
+Copyright (c) 2026 Sergio Andres Botero Castro.
