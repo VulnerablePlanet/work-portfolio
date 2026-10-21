@@ -31,6 +31,8 @@ Budgets actuales:
 - Total byte weight: warning sobre `2.2MB`
 - Script size: warning sobre `1.7MB`
 
+Las assertions son explícitas: no se usa el preset `lighthouse:recommended` para evitar que auditorías informativas (por ejemplo `unused-javascript` o `network-dependency-tree-insight`) rompan el pipeline. `errors-in-console` sí es bloqueante y el favicon incluido evita el 404 de `/favicon.ico`.
+
 ## Opción recomendada de hosting
 
 Para este proyecto, recomiendo Vercel o Netlify primero:
