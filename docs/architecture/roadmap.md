@@ -116,6 +116,6 @@ El coste de L2 no está incluido: depende del proveedor y de la cuota. No se abr
 
 ## 10. Estado actual
 
-- M0: **listo para ejecutar** ([plan detallado](plan-m0.md)).
+- M0: **ejecutado** (2026-10-22): dominio, renderer data-driven, sesión, tooling y limpieza. Ver [plan-m0.md](plan-m0.md).
 - M1–M7: diseñados, no implementados.
 - Decisiones: [ADR-001](../adr/001-shell-hosting.md) a [ADR-007](../adr/007-telemetria-y-privacidad.md).

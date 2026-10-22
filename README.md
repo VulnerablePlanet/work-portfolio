@@ -67,8 +67,9 @@ npm run dev
 npm install        # Instala dependencias
 npm run dev        # Inicia el frontend en modo desarrollo
 npm run typecheck  # Valida TypeScript sin generar build
+npm run lint       # Ejecuta ESLint sobre src
 npm run test       # Ejecuta las pruebas con Vitest
-npm run check      # typecheck + tests
+npm run check      # typecheck + lint + tests
 npm run preview    # Sirve el contenido de dist/ si ya existe
 npm run lhci:local # Ejecuta Lighthouse CI local usando el script de Windows
 ```
