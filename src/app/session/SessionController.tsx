@@ -8,6 +8,7 @@ import {
   formatPointerLockError,
 } from '@/application/session/pointer-lock-error';
 import {
+  getGamePointerLockTarget,
   releaseGamePointerLock,
   requestGamePointerLock,
 } from '@/player/pointer-lock-events';
@@ -46,7 +47,9 @@ export function SessionController() {
 
   useEffect(() => {
     const handlePointerLockChange = () => {
-      const locked = document.pointerLockElement !== null;
+      const target = getGamePointerLockTarget();
+      const locked =
+        target !== null && document.pointerLockElement === target;
       dispatch(
         locked
           ? { type: 'POINTER_LOCK_ACQUIRED' }
