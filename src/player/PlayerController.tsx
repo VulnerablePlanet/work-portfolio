@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import {
   CapsuleCollider,
@@ -8,18 +8,17 @@ import {
 import { Euler, MathUtils, Quaternion, Vector3 } from 'three';
 import { formatPointerLockError } from '@/application/session/pointer-lock-error';
 import { useSessionStore } from '@/store/useSessionStore';
+import type { Spawn } from '@/domain/room/document';
 import {
   requestGamePointerLock,
   setGamePointerLockTarget,
 } from '@/player/pointer-lock-events';
 
 const MOVE_SPEED = 3.25;
-const PLAYER_HEIGHT = 1.7;
 const PLAYER_RADIUS = 0.35;
-const SPAWN_POSITION: [number, number, number] = [0, PLAYER_HEIGHT, 3.8];
 const Y_AXIS = new Vector3(0, 1, 0);
 
-export function PlayerController() {
+export function PlayerController({ spawn }: { spawn: Spawn }) {
   const rigidBodyRef = useRef<RapierRigidBody>(null);
   const inputRef = useRef({
     forward: false,
@@ -29,7 +28,7 @@ export function PlayerController() {
   });
   const dragLookRef = useRef(false);
   const lastMousePositionRef = useRef<{ x: number; y: number } | null>(null);
-  const yawRef = useRef(0);
+  const yawRef = useRef(spawn.yaw);
   const pitchRef = useRef(0);
   const screen = useSessionStore((state) => state.screen);
   const look = useSessionStore((state) => state.look);
@@ -44,6 +43,10 @@ export function PlayerController() {
   useEffect(() => {
     camera.rotation.order = 'YXZ';
   }, [camera]);
+
+  useEffect(() => {
+    yawRef.current = spawn.yaw;
+  }, [spawn.yaw]);
 
   useEffect(() => {
     if (look !== 'fallback') {
@@ -242,7 +245,7 @@ export function PlayerController() {
       linearDamping={8}
       enabledRotations={[false, false, false]}
       enabledTranslations={[true, false, true]}
-      position={SPAWN_POSITION}
+      position={spawn.position}
     >
       <CapsuleCollider args={[0.55, PLAYER_RADIUS]} />
       <group />

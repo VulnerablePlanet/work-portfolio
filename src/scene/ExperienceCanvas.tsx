@@ -5,12 +5,13 @@ import { Perf } from 'r3f-perf';
 import { resolveQualityProfile } from '@/app/bootstrap/quality-tier';
 import { updateBootStatus } from '@/app/bootstrap/render-boot-status';
 import { FocusCameraRig } from '@/camera/FocusCameraRig';
-import '@/scene/three-catalog';
 import { createRenderer } from '@/engine/renderer/renderer-factory';
 import { InteractionManager } from '@/interaction/InteractionManager';
 import { setGamePointerLockTarget } from '@/player/pointer-lock-events';
-import { RoomShell } from '@/scene/RoomShell';
+import { RoomRenderer } from '@/presentation/room/RoomRenderer';
+import { RendererSizeSync } from '@/scene/RendererSizeSync';
 import { useAppStore } from '@/store/useAppStore';
+import { useRoomStore } from '@/store/useRoomStore';
 
 export function ExperienceCanvas() {
   const capabilities = useAppStore((state) => state.capabilities);
@@ -21,6 +22,7 @@ export function ExperienceCanvas() {
   const setRendererBackend = useAppStore((state) => state.setRendererBackend);
   const setBootstrapPhase = useAppStore((state) => state.setBootstrapPhase);
   const setBootError = useAppStore((state) => state.setBootError);
+  const room = useRoomStore((state) => state.document);
 
   if (!capabilities) {
     return null;
@@ -72,10 +74,12 @@ export function ExperienceCanvas() {
           })
         }
       >
+        <RendererSizeSync />
         <Suspense fallback={null}>
           <FocusCameraRig />
           <InteractionManager />
-          <RoomShell
+          <RoomRenderer
+            document={room}
             enableShadows={qualityProfile.enableShadows}
             shadowMapSize={qualityProfile.shadowMapSize}
           />

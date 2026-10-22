@@ -1,17 +1,8 @@
-﻿export type FeatureFlagName =
-  | 'interaction'
-  | 'locomotion'
-  | 'progressHud'
-  | 'miniMap'
-  | 'progressiveAssets'
-  | 'serviceWorker';
+export type FeatureFlagName = 'progressHud' | 'miniMap' | 'serviceWorker';
 
 export const FEATURE_FLAGS: Record<FeatureFlagName, boolean> = {
-  interaction: true,
-  locomotion: true,
   progressHud: true,
   miniMap: true,
-  progressiveAssets: true,
   serviceWorker: true,
 };
 

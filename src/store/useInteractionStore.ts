@@ -1,11 +1,8 @@
 import { create } from 'zustand';
+import type { ContentBlock } from '@/domain/room/document';
 import { useProgressStore } from '@/store/useProgressStore';
 
-export interface InteractionContent {
-  title: string;
-  eyebrow: string;
-  body: string;
-}
+export type InteractionContent = ContentBlock;
 
 interface InteractionState {
   hoveredObjectId: string | null;

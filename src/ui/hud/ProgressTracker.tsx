@@ -1,24 +1,34 @@
-﻿import { useSessionStore } from '@/store/useSessionStore';
-import { PORTFOLIO_OBJECTS } from '@/content/interactive-objects';
-import { getProgressRatio, useProgressStore } from '@/store/useProgressStore';
+import { getInteractiveNodes } from '@/domain/room/selectors';
+import {
+  countVisitedObjects,
+  getProgressRatio,
+  useProgressStore,
+} from '@/store/useProgressStore';
+import { useRoomStore } from '@/store/useRoomStore';
+import { useSessionStore } from '@/store/useSessionStore';
 
 export function ProgressTracker() {
   const screen = useSessionStore((state) => state.screen);
+  const document = useRoomStore((state) => state.document);
   const visitedObjectIds = useProgressStore((state) => state.visitedObjectIds);
   const resetProgress = useProgressStore((state) => state.resetProgress);
-  const ratio = getProgressRatio(visitedObjectIds);
-  const percent = Math.round(ratio * 100);
 
   if (screen !== 'exploring') {
     return null;
   }
+
+  const interactiveNodes = getInteractiveNodes(document);
+  const validIds = interactiveNodes.map((node) => node.id);
+  const visitedCount = countVisitedObjects(visitedObjectIds, validIds);
+  const ratio = getProgressRatio(visitedCount, interactiveNodes.length);
+  const percent = Math.round(ratio * 100);
 
   return (
     <section className="progress-tracker" aria-label="Progreso de exploracion">
       <div className="progress-tracker__header">
         <span>Descubrimiento</span>
         <strong>
-          {visitedObjectIds.length}/{PORTFOLIO_OBJECTS.length}
+          {visitedCount}/{interactiveNodes.length}
         </strong>
       </div>
       <div className="progress-tracker__bar" aria-hidden="true">

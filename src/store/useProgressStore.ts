@@ -1,6 +1,5 @@
-﻿import { create } from 'zustand';
+import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { PORTFOLIO_OBJECTS } from '@/content/interactive-objects';
 
 const PROGRESS_SCHEMA_VERSION = 1;
 
@@ -33,18 +32,28 @@ export const useProgressStore = create<ProgressState>()(
       version: PROGRESS_SCHEMA_VERSION,
       partialize: (state) => ({
         schemaVersion: state.schemaVersion,
-        visitedObjectIds: state.visitedObjectIds.filter((objectId) =>
-          PORTFOLIO_OBJECTS.some((object) => object.id === objectId),
-        ),
+        visitedObjectIds: state.visitedObjectIds,
       }),
     },
   ),
 );
 
-export function getProgressRatio(visitedObjectIds: string[]) {
-  if (PORTFOLIO_OBJECTS.length === 0) {
+export function countVisitedObjects(
+  visitedObjectIds: string[],
+  validObjectIds: readonly string[],
+): number {
+  const validIds = new Set(validObjectIds);
+
+  return visitedObjectIds.filter((objectId) => validIds.has(objectId)).length;
+}
+
+export function getProgressRatio(
+  visitedCount: number,
+  totalObjects: number,
+): number {
+  if (totalObjects <= 0) {
     return 0;
   }
 
-  return visitedObjectIds.length / PORTFOLIO_OBJECTS.length;
+  return Math.min(1, visitedCount / totalObjects);
 }

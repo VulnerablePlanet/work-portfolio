@@ -282,6 +282,20 @@ a {
   line-height: 1.7;
 }
 
+.focus-panel__links {
+  margin: 0 0 8px;
+  padding-left: 18px;
+  color: #9fc2ff;
+}
+
+.focus-panel__links li {
+  margin: 2px 0;
+}
+
+.focus-panel__links a {
+  color: #9fc2ff;
+}
+
 .focus-panel__hint {
   font-size: 0.9rem;
   color: #9fb2dd !important;

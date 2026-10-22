@@ -6,15 +6,13 @@ Portfolio 3D profesional construido con Vite, TypeScript, React, React Three Fib
 
 ## Estado actual
 
-Estamos en **Fase 7 scaffold de CI/CD**, no en producto visual final. El repositorio está publicado en GitHub (rama `main`) y la CI corre en cada push. La base técnica existe y se valida con TypeScript, pero aún faltan assets reales GLB/KTX2, optimización profunda y validación visual final en hardware real.
+Estamos en **M0 (fundaciones)**: contrato `RoomDocument` validado con Zod, renderer data-driven, 12 prefabs, máquina de sesión y pruebas. La habitación actual se reconstruye desde [`src/content/seed/workspace-v1.ts`](src/content/seed/workspace-v1.ts), no desde JSX hardcodeado. El repositorio está publicado en GitHub (rama `main`) y la CI corre en cada push. Aún no hay backend, editor, assets reales GLB/KTX2 ni validación visual en hardware real; el siguiente hito es M1 (React Router 7 + Supabase).
 
-> Importante: en el estado actual **no existe backend**. Este repositorio es una aplicación frontend 3D servida por Vite. Si más adelante se agrega un backend/API, deberá documentarse como un servicio separado.
+> Importante: en el estado actual **no existe backend**. La arquitectura objetivo (M1) incorpora Supabase para auth, Postgres y publicación, y R2 para assets; ver [`docs/adr/001-shell-hosting.md`](docs/adr/001-shell-hosting.md).
 
 ## Arquitectura
 
-El código actual sigue en la fase descrita arriba. La arquitectura objetivo, las decisiones (ADR), el contrato del documento de habitación y el plan por fases están en [`docs/`](docs/README.md), empezando por [`docs/architecture/overview.md`](docs/architecture/overview.md).
-
-> Esa documentación describe lo que se va a construir; no debe leerse como estado implementado.
+La arquitectura objetivo, las decisiones (ADR), el contrato del documento de habitación y el plan por fases están en [`docs/`](docs/README.md), empezando por [`docs/architecture/overview.md`](docs/architecture/overview.md). Lo implementado en M0 está descrito abajo y en [`docs/architecture/plan-m0.md`](docs/architecture/plan-m0.md).
 
 ## Requisitos
 
@@ -52,25 +50,16 @@ Si Vite usa otro puerto porque `4173` está ocupado, la terminal mostrará la UR
 
 ## Backend
 
-Actualmente **no hay backend que iniciar**.
+Actualmente **no hay backend que iniciar**. M0 se ejecuta íntegramente en el frontend y la habitación se carga desde la semilla local.
 
-No existe carpeta `backend/`, servidor API, base de datos, Docker Compose ni proceso Node/Express/Nest separado. Todo lo que ves en la app viene del frontend y de archivos locales dentro de `src/` y `public/`.
+La arquitectura objetivo sí incluye backend porque el producto es una plataforma multiusuario: Supabase (Auth, Postgres, RLS) para cuentas y publicación, Cloudflare R2 para assets, y React Router 7 sobre Cloudflare Workers para el perfil público. Ese trabajo empieza en M1 y está documentado en [`docs/adr/001-shell-hosting.md`](docs/adr/001-shell-hosting.md) y [`docs/architecture/data-model.md`](docs/architecture/data-model.md).
 
-Por eso, para correr el proyecto hoy solo necesitas:
+Hasta M1, para correr el proyecto solo necesitas:
 
 ```powershell
 npm install
 npm run dev
 ```
-
-Cuando el proyecto necesite backend real, la recomendación será documentarlo así:
-
-```text
-/frontend  -> Vite + React + R3F
-/backend   -> API, auth, CMS o analytics si realmente se necesita
-```
-
-Pero NO conviene inventar backend antes de tener una necesidad real. Para este portfolio 3D, de momento el backend sería complejidad innecesaria.
 
 ## Comandos disponibles
 
@@ -108,49 +97,51 @@ Con el frontend corriendo:
 
 ## Implementado
 
+- Contrato `RoomDocument` v1 con validación Zod, presupuestos y reglas de assets/portales.
+- Renderer data-driven: la sala, sus objetos y sus colisiones se derivan del documento, no de JSX hardcodeado.
+- 12 prefabs con geometría y catálogo de costes.
+- Máquina de sesión explícita: `boot → menu → exploring ↔ reading` y `paused`; ESC tiene un único dueño y cerrar lectura vuelve a explorar.
 - Capability gate al arranque:
   - WebGPU preferente.
   - WebGL2 fallback.
   - fallback estático si no hay soporte.
 - Renderer factory async con backend efectivo reportado al HUD.
-- Room shell inicial con suelo, paredes, techo, obstáculo, colliders manuales y materiales procedurales de orientación.
-- Locomoción FPS tipo Minecraft con WASD, pointer lock, pausa con `ESC` y Rapier.
+- Locomoción FPS tipo Minecraft con WASD, pointer lock, modo compatible y Rapier.
 - Sistema de interacción:
   - raycast central throttled.
   - reticle.
   - tecla `E` para leer.
   - panel DOM desacoplado del canvas.
-  - cierre con `ESC`.
 - Transiciones GSAP para panel y micro-ajuste de FOV.
-- HUD técnico con backend, tier, boot, DPR, pointer lock y modo de interacción.
-- Mini mapa SVG y progreso persistido con Zustand.
-- Feature flags centralizados.
-- Scaffold de assets progresivos: `placeholder -> low -> high`.
-- Fallback estático en `public/fallback.html` (Vite lo copia a `dist/`).
+- HUD técnico con backend, tier, boot, DPR, look y pantalla de sesión.
+- Mini mapa SVG y progreso persistido con Zustand, derivados del documento activo.
+- Feature flags para minimapa, progreso y service worker.
+- Fallback estático en `public/fallback.html`.
 - Service Worker básico para producción.
-- CI con GitHub Actions y Lighthouse CI.
+- Pruebas con Vitest y CI con GitHub Actions, Lighthouse CI.
+- Documentación de arquitectura, ADR y contrato del documento.
 
-## Fase 7 / CI-CD
+## CI-CD
 
 Archivos relevantes:
 
-- `.github/workflows/ci.yml` — typecheck, build y Lighthouse CI en GitHub Actions.
+- `.github/workflows/ci.yml` — `check` (typecheck + tests), build y Lighthouse CI.
 - `.lighthouserc.cjs` — budgets de performance/accessibility/SEO.
 - `.lighthouserc.local.cjs` — variante local para Windows usando Chrome/Edge por remote debugging.
 - `scripts/run-lhci-local.ps1` — helper local de Lighthouse CI para Windows.
-- `docs/deployment.md` — notas de despliegue.
+- `docs/deployment.md` — notas del pipeline anterior.
 - `vite.config.ts` — code splitting manual por vendors principales.
 
 ## Qué falta para producto final
 
-1. Pipeline real Blender → GLB + Draco + KTX2.
-2. Lazy zones reales por habitación/sección.
-3. LOD/instancing/dispose sistemático.
-4. Post-processing final compatible con la estrategia de renderer.
-5. Validación manual en navegador y hardware real.
-6. Elegir hosting real: Vercel, Netlify o GitHub Pages.
-7. Configurar branch protection y deploy automático en el hosting elegido.
-8. Agregar backend solo si aparece una necesidad real: CMS, analytics propio, autenticación o API dinámica.
+1. **M1**: backend (Supabase), auth, publicación y perfil público SSR con React Router 7.
+2. **M2**: editor de habitación, paleta de prefabs y plantillas.
+3. **M3**: pipeline de assets GLB/KTX2, optimización y colisiones de usuario.
+4. **M4**: imagen → relieve L1.
+5. **M5**: multihabitación, portales y perfil agregado.
+6. Lazy zones, LOD/instancing y dispose sistemático.
+7. Validación manual en navegador y hardware real.
+8. Hosting según ADR-001: Cloudflare, Supabase y R2.
 
 ## Licencia
 

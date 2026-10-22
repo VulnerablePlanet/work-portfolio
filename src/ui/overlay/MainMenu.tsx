@@ -1,9 +1,13 @@
 import { resolveQualityProfile } from '@/app/bootstrap/quality-tier';
-import { useSessionStore } from '@/store/useSessionStore';
-import { PORTFOLIO_OBJECTS } from '@/content/interactive-objects';
+import { getInteractiveNodes } from '@/domain/room/selectors';
 import { useAppStore } from '@/store/useAppStore';
 import { useInteractionStore } from '@/store/useInteractionStore';
-import { useProgressStore } from '@/store/useProgressStore';
+import {
+  countVisitedObjects,
+  useProgressStore,
+} from '@/store/useProgressStore';
+import { useRoomStore } from '@/store/useRoomStore';
+import { useSessionStore } from '@/store/useSessionStore';
 
 export function MainMenu() {
   const capabilities = useAppStore((state) => state.capabilities);
@@ -15,6 +19,7 @@ export function MainMenu() {
   const error = useSessionStore((state) => state.error);
   const dispatch = useSessionStore((state) => state.dispatch);
   const activeContent = useInteractionStore((state) => state.activeContent);
+  const document = useRoomStore((state) => state.document);
   const visitedObjectIds = useProgressStore((state) => state.visitedObjectIds);
   const resetProgress = useProgressStore((state) => state.resetProgress);
 
@@ -31,7 +36,12 @@ export function MainMenu() {
   const qualityProfile = capabilities
     ? resolveQualityProfile(capabilities)
     : null;
-  const progress = `${visitedObjectIds.length}/${PORTFOLIO_OBJECTS.length}`;
+  const interactiveNodes = getInteractiveNodes(document);
+  const visitedCount = countVisitedObjects(
+    visitedObjectIds,
+    interactiveNodes.map((node) => node.id),
+  );
+  const progress = `${visitedCount}/${interactiveNodes.length}`;
 
   const handleEnterRoom = () => {
     if (!isSceneReady) {

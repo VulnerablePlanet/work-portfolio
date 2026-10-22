@@ -1,6 +1,6 @@
 # Plan M0 — Fundaciones
 
-- Estado: listo para ejecutar
+- Estado: ejecutado (M0)
 - Fecha: 2026-10-22
 - Duración estimada: 2 semanas (1 desarrollador a tiempo completo)
 - Depende de: nada
@@ -13,15 +13,15 @@ Actualizado: 2026-10-22.
 
 | Tarea | Estado | Notas |
 |---|---|---|
-| T0.1 Dominio | Hecha | `src/domain/room/{document,schema,budgets,rules,migrations,validation}.ts` + 5 suites |
+| T0.1 Dominio | Hecha | `src/domain/room/{document,schema,budgets,rules,migrations,validation}.ts` + suites |
 | T0.2 Semilla | Hecha | `src/content/seed/workspace-v1.ts` (4 nodos) |
-| T0.3 Prefabs | Parcial | Catálogo de metadata, costes y colisión; geometría pendiente |
-| T0.4 Renderer | Pendiente | Próximo incremento |
+| T0.3 Prefabs | Hecha | Catálogo y geometría de 12 prefabs en `src/presentation/prefabs/registry.tsx` |
+| T0.4 Renderer | Hecha | `RoomRenderer` data-driven, colisionadores derivados, HUD/progreso desde el documento y sincronización de viewport/DPR/aspect del renderer |
 | T0.5 Sesión | Hecha | Máquina pura, store y controlador único de ESC/pointer lock |
 | T0.6 Pointer lock | Hecha | Un solo camino de request/release; `GameModeControls` eliminado |
-| T0.7 Limpieza | Parcial | `GameModeControls` eliminado; queda `BootScene`, `three-catalog` y flags |
-| T0.9 Docs | Pendiente | Actualización final de estado |
-| T0.8 Tooling | Parcial | Vitest, `test`/`check` y CI ejecutando pruebas; lint pendiente |
+| T0.7 Limpieza | Parcial | Eliminados `RoomShell`, `InteractiveObject`, contenido legacy, `BootScene`, `three-catalog`, andamiaje de assets y flags muertas; queda CSS muerto |
+| T0.8 Tooling | Parcial | Vitest (10 suites, 47 pruebas), `test`/`check` y CI ejecutando pruebas; lint pendiente |
+| T0.9 Docs | Parcial | README y plan actualizados; falta el estado final de la fase |
 
 ## 1. Objetivo
 

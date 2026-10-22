@@ -10,8 +10,7 @@ export type PrefabCategory =
 
 export type ColliderSpec =
   | { type: 'none' }
-  | { type: 'box'; size: Vec3 }
-  | { type: 'compound'; boxes: { size: Vec3; offset: Vec3 }[] };
+  | { type: 'box'; size: Vec3 };
 
 export interface PrefabCost {
   triangles: number;

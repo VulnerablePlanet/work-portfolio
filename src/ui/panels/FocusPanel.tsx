@@ -46,6 +46,17 @@ export function FocusPanel() {
       <p className="focus-panel__eyebrow">{activeContent.eyebrow}</p>
       <h2>{activeContent.title}</h2>
       <p>{activeContent.body}</p>
+      {activeContent.links && activeContent.links.length > 0 ? (
+        <ul className="focus-panel__links">
+          {activeContent.links.map((link) => (
+            <li key={`${link.label}:${link.href}`}>
+              <a href={link.href} target="_blank" rel="noreferrer">
+                {link.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : null}
       <p className="focus-panel__hint">
         Presiona ESC o usa el botón para volver.
       </p>
