@@ -19,9 +19,9 @@ Actualizado: 2026-10-22.
 | T0.4 Renderer | Hecha | `RoomRenderer` data-driven, colisionadores derivados, HUD/progreso desde el documento y sincronización de viewport/DPR/aspect del renderer |
 | T0.5 Sesión | Hecha | Máquina pura, store y controlador único de ESC/pointer lock |
 | T0.6 Pointer lock | Hecha | Un solo camino de request/release; `GameModeControls` eliminado |
-| T0.7 Limpieza | Parcial | Eliminados `RoomShell`, `InteractiveObject`, contenido legacy, `BootScene`, `three-catalog`, andamiaje de assets y flags muertas; queda CSS muerto |
+| T0.7 Limpieza | Hecha | Eliminados `RoomShell`, `InteractiveObject`, contenido legacy, `BootScene`, `three-catalog`, andamiaje de assets, flags y CSS muertos |
 | T0.8 Tooling | Parcial | Vitest (10 suites, 47 pruebas), `test`/`check` y CI ejecutando pruebas; lint pendiente |
-| T0.9 Docs | Parcial | README y plan actualizados; falta el estado final de la fase |
+| T0.9 Docs | Hecha | README, plan y estado de la fase actualizados |
 
 ## 1. Objetivo
 
