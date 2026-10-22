@@ -1,17 +1,15 @@
-﻿import { PORTFOLIO_OBJECTS } from '@/content/interactive-objects';
-import { useAppStore } from '@/store/useAppStore';
+﻿import { useSessionStore } from '@/store/useSessionStore';
+import { PORTFOLIO_OBJECTS } from '@/content/interactive-objects';
 import { getProgressRatio, useProgressStore } from '@/store/useProgressStore';
 
 export function ProgressTracker() {
-  const pointerLockActive = useAppStore((state) => state.pointerLockActive);
-  const fallbackLookActive = useAppStore((state) => state.fallbackLookActive);
-  const gamePaused = useAppStore((state) => state.gamePaused);
+  const screen = useSessionStore((state) => state.screen);
   const visitedObjectIds = useProgressStore((state) => state.visitedObjectIds);
   const resetProgress = useProgressStore((state) => state.resetProgress);
   const ratio = getProgressRatio(visitedObjectIds);
   const percent = Math.round(ratio * 100);
 
-  if ((!pointerLockActive && !fallbackLookActive) || gamePaused) {
+  if (screen !== 'exploring') {
     return null;
   }
 

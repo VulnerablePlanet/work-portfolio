@@ -1,15 +1,15 @@
-import { useEffect } from 'react';
+﻿import { useEffect } from 'react';
 import { useThree } from '@react-three/fiber';
 import { gsap } from 'gsap';
-import { useInteractionStore } from '@/store/useInteractionStore';
+import { useSessionStore } from '@/store/useSessionStore';
 
 const EXPLORING_FOV = 50;
 const READING_FOV = 44;
 
 export function FocusCameraRig() {
   const { camera } = useThree();
-  const mode = useInteractionStore((state) => state.mode);
-  const isReading = mode === 'reading';
+  const screen = useSessionStore((state) => state.screen);
+  const isReading = screen === 'reading';
 
   useEffect(() => {
     gsap.to(camera, {

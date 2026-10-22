@@ -101,10 +101,10 @@ Con el frontend corriendo:
 ## Controles actuales
 
 - Botón **Entrar/Reanudar habitación**: entra al modo habitación.
-- Mouse: mirar libremente cuando el pointer lock está activo.
+- Mouse: mirar libremente cuando el pointer lock está activo; si el navegador lo bloquea, el modo compatible permite mirar moviendo el mouse.
 - `WASD`: moverse por la habitación.
 - `E`: interactuar con objetos apuntados por el reticle.
-- `ESC`: salir del modo habitación, pausar y recuperar el cursor.
+- `ESC`: cierra el panel de lectura y vuelve a explorar; en exploración pausa; en pausa vuelve al menú.
 
 ## Implementado
 

@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef } from 'react';
+﻿import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Raycaster, Vector2 } from 'three';
+import { useSessionStore } from '@/store/useSessionStore';
 import {
   getInteractiveObjectById,
   getInteractiveObjects,
@@ -13,35 +14,36 @@ export function InteractionManager() {
   const raycaster = useMemo(() => new Raycaster(), []);
   const frameCountRef = useRef(0);
   const hoveredIdRef = useRef<string | null>(null);
-  const setHoveredObject = useInteractionStore((state) => state.setHoveredObject);
-  const activateObject = useInteractionStore((state) => state.activateObject);
+  const setHoveredObject = useInteractionStore(
+    (state) => state.setHoveredObject,
+  );
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.code === 'Escape') {
-        useInteractionStore.getState().beginCloseActiveObject();
-        return;
-      }
-
       if (event.code !== 'KeyE' || event.repeat) {
         return;
       }
 
-      const { hoveredObjectId, mode } = useInteractionStore.getState();
+      const session = useSessionStore.getState();
 
-      if (!hoveredObjectId || mode === 'reading') {
+      if (session.screen !== 'exploring') {
+        return;
+      }
+
+      const { hoveredObjectId } = useInteractionStore.getState();
+
+      if (!hoveredObjectId) {
         return;
       }
 
       const entry = getInteractiveObjectById(hoveredObjectId);
 
-      if (entry) {
-        if (document.pointerLockElement) {
-          void document.exitPointerLock();
-        }
-
-        activateObject(entry.id, entry.content);
+      if (!entry) {
+        return;
       }
+
+      useInteractionStore.getState().activateObject(entry.id, entry.content);
+      session.dispatch({ type: 'INTERACT' });
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -49,12 +51,17 @@ export function InteractionManager() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [activateObject]);
+  }, []);
 
   useFrame(({ camera }) => {
-    const mode = useInteractionStore.getState().mode;
+    const session = useSessionStore.getState();
 
-    if (mode === 'reading') {
+    if (session.screen !== 'exploring') {
+      if (hoveredIdRef.current !== null) {
+        hoveredIdRef.current = null;
+        setHoveredObject(null);
+      }
+
       return;
     }
 

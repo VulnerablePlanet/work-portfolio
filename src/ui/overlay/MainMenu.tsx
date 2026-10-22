@@ -1,63 +1,53 @@
-import { requestGamePointerLock } from '@/player/pointer-lock-events';
 import { resolveQualityProfile } from '@/app/bootstrap/quality-tier';
+import { useSessionStore } from '@/store/useSessionStore';
+import { PORTFOLIO_OBJECTS } from '@/content/interactive-objects';
 import { useAppStore } from '@/store/useAppStore';
 import { useInteractionStore } from '@/store/useInteractionStore';
 import { useProgressStore } from '@/store/useProgressStore';
-import { PORTFOLIO_OBJECTS } from '@/content/interactive-objects';
 
 export function MainMenu() {
   const capabilities = useAppStore((state) => state.capabilities);
   const rendererBackend = useAppStore((state) => state.rendererBackend);
-  const gameStarted = useAppStore((state) => state.gameStarted);
-  const gamePaused = useAppStore((state) => state.gamePaused);
-  const pointerLockActive = useAppStore((state) => state.pointerLockActive);
-  const fallbackLookActive = useAppStore((state) => state.fallbackLookActive);
-  const setFallbackLookActive = useAppStore((state) => state.setFallbackLookActive);
-  const setGameStarted = useAppStore((state) => state.setGameStarted);
-  const setGamePaused = useAppStore((state) => state.setGamePaused);
-  const pointerLockError = useAppStore((state) => state.pointerLockError);
-  const setPointerLockError = useAppStore((state) => state.setPointerLockError);
+  const bootstrapPhase = useAppStore((state) => state.bootstrapPhase);
   const showDebugHud = useAppStore((state) => state.showDebugHud);
   const toggleDebugHud = useAppStore((state) => state.toggleDebugHud);
+  const screen = useSessionStore((state) => state.screen);
+  const error = useSessionStore((state) => state.error);
+  const dispatch = useSessionStore((state) => state.dispatch);
+  const activeContent = useInteractionStore((state) => state.activeContent);
   const visitedObjectIds = useProgressStore((state) => state.visitedObjectIds);
   const resetProgress = useProgressStore((state) => state.resetProgress);
-  const activeContent = useInteractionStore((state) => state.activeContent);
 
-  // Al leer un objeto se sale del pointer lock y el juego queda en pausa.
-  // El panel de lectura debe tener prioridad sobre el menú de pausa.
   if (activeContent) {
     return null;
   }
 
-  if ((pointerLockActive || fallbackLookActive) && !gamePaused) {
+  if (screen !== 'menu' && screen !== 'paused') {
     return null;
   }
 
-  const qualityProfile = capabilities ? resolveQualityProfile(capabilities) : null;
+  const isPaused = screen === 'paused';
+  const isSceneReady = bootstrapPhase === 'ready';
+  const qualityProfile = capabilities
+    ? resolveQualityProfile(capabilities)
+    : null;
   const progress = `${visitedObjectIds.length}/${PORTFOLIO_OBJECTS.length}`;
 
   const handleEnterRoom = () => {
-    setPointerLockError(null);
-    void requestGamePointerLock().catch((error: unknown) => {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'El navegador rechaz? la captura del mouse.';
+    if (!isSceneReady) {
+      return;
+    }
 
-      setPointerLockError(
-        `${message} Modo compatible activado: mueve el mouse dentro de la ventana. Para control infinito real, usa Chrome/Edge normal.`,
-      );
-      setGameStarted(true);
-      setGamePaused(false);
-      setFallbackLookActive(true);
-    });
+    dispatch({ type: isPaused ? 'RESUME' : 'ENTER' });
   };
 
   return (
     <section className="main-menu" aria-label="Menu principal del portfolio">
       <div className="main-menu__panel">
         <p className="main-menu__eyebrow">Portfolio interactivo 3D</p>
-        <h1>{gameStarted ? 'Habitación en pausa' : 'Bienvenido al portfolio'}</h1>
+        <h1>
+          {isPaused ? 'Habitación en pausa' : 'Bienvenido al portfolio'}
+        </h1>
         <p className="main-menu__lead">
           Explora una habitación 3D con controles tipo videojuego: mouse para
           mirar, WASD para moverte, E para interactuar y ESC para volver a este
@@ -65,19 +55,24 @@ export function MainMenu() {
         </p>
 
         <div className="main-menu__actions">
-          <button type="button" className="main-menu__primary" onClick={handleEnterRoom}>
-            {gameStarted ? 'Reanudar habitación' : 'Entrar al juego'}
+          <button
+            type="button"
+            className="main-menu__primary"
+            onClick={handleEnterRoom}
+            disabled={!isSceneReady}
+          >
+            {isSceneReady
+              ? isPaused
+                ? 'Reanudar habitación'
+                : 'Entrar al juego'
+              : 'Preparando escena…'}
           </button>
           <a href="/fallback.html" className="main-menu__secondary">
             Ver versión accesible
           </a>
         </div>
 
-        {pointerLockError ? (
-          <p className="main-menu__error">
-            {pointerLockError}
-          </p>
-        ) : null}
+        {error ? <p className="main-menu__error">{error}</p> : null}
 
         <div className="main-menu__grid" aria-label="Configuracion actual">
           <div>

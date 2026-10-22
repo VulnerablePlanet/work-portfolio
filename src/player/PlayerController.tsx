@@ -1,22 +1,17 @@
-import { useEffect, useMemo, useRef } from 'react';
+﻿import { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import {
   CapsuleCollider,
   RigidBody,
   type RapierRigidBody,
 } from '@react-three/rapier';
+import { Euler, MathUtils, Quaternion, Vector3 } from 'three';
+import { formatPointerLockError } from '@/application/session/pointer-lock-error';
+import { useSessionStore } from '@/store/useSessionStore';
 import {
-  Euler,
-  MathUtils,
-  Quaternion,
-  Vector3,
-} from 'three';
-import {
-  REQUEST_POINTER_LOCK_EVENT,
+  requestGamePointerLock,
   setGamePointerLockTarget,
 } from '@/player/pointer-lock-events';
-import { useAppStore } from '@/store/useAppStore';
-import { useInteractionStore } from '@/store/useInteractionStore';
 
 const MOVE_SPEED = 3.25;
 const PLAYER_HEIGHT = 1.7;
@@ -33,19 +28,12 @@ export function PlayerController() {
     right: false,
   });
   const dragLookRef = useRef(false);
-  const fallbackLookActiveRef = useRef(false);
   const lastMousePositionRef = useRef<{ x: number; y: number } | null>(null);
   const yawRef = useRef(0);
   const pitchRef = useRef(0);
-  const pointerLockActive = useAppStore((state) => state.pointerLockActive);
-  const fallbackLookActive = useAppStore((state) => state.fallbackLookActive);
-  const gameStarted = useAppStore((state) => state.gameStarted);
-  const gamePaused = useAppStore((state) => state.gamePaused);
-  const setPointerLockActive = useAppStore((state) => state.setPointerLockActive);
-  const setFallbackLookActive = useAppStore((state) => state.setFallbackLookActive);
-  const setPointerLockError = useAppStore((state) => state.setPointerLockError);
-  const setGameStarted = useAppStore((state) => state.setGameStarted);
-  const setGamePaused = useAppStore((state) => state.setGamePaused);
+  const screen = useSessionStore((state) => state.screen);
+  const look = useSessionStore((state) => state.look);
+  const dispatch = useSessionStore((state) => state.dispatch);
   const { camera, gl } = useThree();
 
   const movement = useMemo(() => new Vector3(), []);
@@ -58,34 +46,26 @@ export function PlayerController() {
   }, [camera]);
 
   useEffect(() => {
-    fallbackLookActiveRef.current = fallbackLookActive;
-
-    if (!fallbackLookActive) {
+    if (look !== 'fallback') {
       lastMousePositionRef.current = null;
     }
-  }, [fallbackLookActive]);
+  }, [look]);
 
   useEffect(() => {
-    const handlePointerLockChange = () => {
-      const isLocked = document.pointerLockElement === gl.domElement;
-      setPointerLockActive(isLocked);
-      if (isLocked) {
-        setPointerLockError(null);
-        setFallbackLookActive(false);
-        setGameStarted(true);
-      }
-      setGamePaused(!isLocked);
-      dragLookRef.current = false;
+    const applyLookDelta = (movementX: number, movementY: number) => {
+      yawRef.current -= movementX * 0.0022;
+      pitchRef.current = MathUtils.clamp(
+        pitchRef.current - movementY * 0.0018,
+        -1.15,
+        1.15,
+      );
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.code === 'Escape') {
-        setGamePaused(true);
-        setFallbackLookActive(false);
-        if (document.pointerLockElement === gl.domElement) {
-          document.exitPointerLock();
-        }
+      if (useSessionStore.getState().screen !== 'exploring') {
+        return;
       }
+
       if (event.code === 'KeyW') inputRef.current.forward = true;
       if (event.code === 'KeyS') inputRef.current.backward = true;
       if (event.code === 'KeyA') inputRef.current.left = true;
@@ -99,19 +79,18 @@ export function PlayerController() {
       if (event.code === 'KeyD') inputRef.current.right = false;
     };
 
-    const applyLookDelta = (movementX: number, movementY: number) => {
-      yawRef.current -= movementX * 0.0022;
-      pitchRef.current = MathUtils.clamp(
-        pitchRef.current - movementY * 0.0018,
-        -1.15,
-        1.15,
-      );
-    };
-
     const handleMouseMove = (event: MouseEvent) => {
+      const session = useSessionStore.getState();
+
+      if (session.screen !== 'exploring') {
+        lastMousePositionRef.current = null;
+        return;
+      }
+
       const hasPointerLock = document.pointerLockElement === gl.domElement;
-      const hasFallbackLook = fallbackLookActiveRef.current;
-      const canUseLook = hasPointerLock || hasFallbackLook || dragLookRef.current;
+      const hasFallbackLook = session.look === 'fallback';
+      const canUseLook =
+        hasPointerLock || hasFallbackLook || dragLookRef.current;
 
       if (!canUseLook) {
         lastMousePositionRef.current = null;
@@ -137,7 +116,15 @@ export function PlayerController() {
     };
 
     const handleMouseDown = (event: MouseEvent) => {
-      if (event.button !== 0 || document.pointerLockElement === gl.domElement) {
+      if (event.button !== 0) {
+        return;
+      }
+
+      if (useSessionStore.getState().screen !== 'exploring') {
+        return;
+      }
+
+      if (document.pointerLockElement === gl.domElement) {
         return;
       }
 
@@ -148,96 +135,77 @@ export function PlayerController() {
       dragLookRef.current = false;
     };
 
+    const handleClick = () => {
+      const session = useSessionStore.getState();
+
+      if (session.screen !== 'exploring' || session.look === 'pointer') {
+        return;
+      }
+
+      if (document.pointerLockElement === gl.domElement) {
+        return;
+      }
+
+      void requestGamePointerLock().catch((error: unknown) => {
+        dispatch({
+          type: 'FALLBACK_LOOK',
+          message: formatPointerLockError(error),
+        });
+      });
+    };
+
     const handleContextMenu = (event: MouseEvent) => {
       event.preventDefault();
     };
 
-    const lockPointer = () => {
-      if (document.pointerLockElement !== gl.domElement) {
-        setPointerLockError(null);
-        setGamePaused(false);
-        void gl.domElement.requestPointerLock().catch((error: unknown) => {
-          const message =
-            error instanceof Error
-              ? error.message
-              : 'El navegador rechazo la captura del mouse.';
-
-          setPointerLockError(
-            `${message} Modo compatible activado: mueve el mouse dentro de la ventana. Para control infinito real, usa Chrome/Edge normal.`,
-          );
-          setGameStarted(true);
-          setGamePaused(false);
-          setFallbackLookActive(true);
-          setPointerLockActive(false);
-        });
-      }
-    };
-
-    const handleExternalPointerLockRequest = () => {
-      lockPointer();
-    };
-
     setGamePointerLockTarget(gl.domElement);
 
-    document.addEventListener('pointerlockchange', handlePointerLockChange);
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('keyup', handleKeyUp);
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-    window.addEventListener(
-      REQUEST_POINTER_LOCK_EVENT,
-      handleExternalPointerLockRequest,
-    );
-    gl.domElement.addEventListener('click', lockPointer);
+    gl.domElement.addEventListener('click', handleClick);
     gl.domElement.addEventListener('mousedown', handleMouseDown);
     gl.domElement.addEventListener('contextmenu', handleContextMenu);
 
     return () => {
-      document.removeEventListener(
-        'pointerlockchange',
-        handlePointerLockChange,
-      );
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('keyup', handleKeyUp);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
-      window.removeEventListener(
-        REQUEST_POINTER_LOCK_EVENT,
-        handleExternalPointerLockRequest,
-      );
-      gl.domElement.removeEventListener('click', lockPointer);
+      gl.domElement.removeEventListener('click', handleClick);
       gl.domElement.removeEventListener('mousedown', handleMouseDown);
       gl.domElement.removeEventListener('contextmenu', handleContextMenu);
       setGamePointerLockTarget(null);
-      setFallbackLookActive(false);
-      setPointerLockActive(false);
-      setGamePaused(true);
+      dragLookRef.current = false;
     };
-  }, [
-    gl.domElement,
-    setGamePaused,
-    setGameStarted,
-    setFallbackLookActive,
-    setPointerLockActive,
-    setPointerLockError,
-  ]);
+  }, [dispatch, gl.domElement]);
+
+  useEffect(() => {
+    if (screen === 'exploring') {
+      return;
+    }
+
+    inputRef.current.forward = false;
+    inputRef.current.backward = false;
+    inputRef.current.left = false;
+    inputRef.current.right = false;
+    dragLookRef.current = false;
+    lastMousePositionRef.current = null;
+  }, [screen]);
 
   useFrame((_, delta) => {
     const rigidBody = rigidBodyRef.current;
-    const interactionMode = useInteractionStore.getState().mode;
 
     if (!rigidBody) {
       return;
     }
 
+    const sessionScreen = useSessionStore.getState().screen;
+
     movement.set(0, 0, 0);
 
-    if (
-      gameStarted &&
-      !gamePaused &&
-      (pointerLockActive || fallbackLookActive) &&
-      interactionMode !== 'reading'
-    ) {
+    if (sessionScreen === 'exploring') {
       if (inputRef.current.forward) movement.z -= 1;
       if (inputRef.current.backward) movement.z += 1;
       if (inputRef.current.left) movement.x -= 1;
@@ -263,17 +231,6 @@ export function PlayerController() {
     cameraEuler.set(pitchRef.current, yawRef.current, 0);
     camera.quaternion.setFromEuler(cameraEuler);
   });
-
-  useEffect(() => {
-    if (gamePaused) {
-      inputRef.current.forward = false;
-      inputRef.current.backward = false;
-      inputRef.current.left = false;
-      inputRef.current.right = false;
-      dragLookRef.current = false;
-      lastMousePositionRef.current = null;
-    }
-  }, [gamePaused]);
 
   return (
     <RigidBody

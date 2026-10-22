@@ -1,15 +1,15 @@
-import { useAppStore } from '@/store/useAppStore';
+﻿import { useSessionStore } from '@/store/useSessionStore';
 import { useInteractionStore } from '@/store/useInteractionStore';
 
 export function Reticle() {
-  const pointerLockActive = useAppStore((state) => state.pointerLockActive);
-  const fallbackLookActive = useAppStore((state) => state.fallbackLookActive);
-  const gamePaused = useAppStore((state) => state.gamePaused);
+  const screen = useSessionStore((state) => state.screen);
+  const look = useSessionStore((state) => state.look);
   const hoveredObjectId = useInteractionStore((state) => state.hoveredObjectId);
-  const mode = useInteractionStore((state) => state.mode);
-  const isInteractive = Boolean(hoveredObjectId) && mode !== 'reading';
+  const isExploring =
+    screen === 'exploring' && (look === 'pointer' || look === 'fallback');
+  const isInteractive = isExploring && Boolean(hoveredObjectId);
 
-  if ((!pointerLockActive && !fallbackLookActive) || gamePaused) {
+  if (!isExploring) {
     return null;
   }
 

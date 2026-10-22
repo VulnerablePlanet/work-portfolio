@@ -17,7 +17,10 @@ Actualizado: 2026-10-22.
 | T0.2 Semilla | Hecha | `src/content/seed/workspace-v1.ts` (4 nodos) |
 | T0.3 Prefabs | Parcial | Catálogo de metadata, costes y colisión; geometría pendiente |
 | T0.4 Renderer | Pendiente | Próximo incremento |
-| T0.5–T0.7, T0.9 | Pendientes | Sesión, limpieza y docs |
+| T0.5 Sesión | Hecha | Máquina pura, store y controlador único de ESC/pointer lock |
+| T0.6 Pointer lock | Hecha | Un solo camino de request/release; `GameModeControls` eliminado |
+| T0.7 Limpieza | Parcial | `GameModeControls` eliminado; queda `BootScene`, `three-catalog` y flags |
+| T0.9 Docs | Pendiente | Actualización final de estado |
 | T0.8 Tooling | Parcial | Vitest, `test`/`check` y CI ejecutando pruebas; lint pendiente |
 
 ## 1. Objetivo

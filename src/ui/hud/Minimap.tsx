@@ -1,5 +1,5 @@
-﻿import { PORTFOLIO_OBJECTS } from '@/content/interactive-objects';
-import { useAppStore } from '@/store/useAppStore';
+﻿import { useSessionStore } from '@/store/useSessionStore';
+import { PORTFOLIO_OBJECTS } from '@/content/interactive-objects';
 import { useProgressStore } from '@/store/useProgressStore';
 
 const ROOM_SIZE = 10;
@@ -10,12 +10,10 @@ function mapToMinimap(value: number) {
 }
 
 export function Minimap() {
-  const pointerLockActive = useAppStore((state) => state.pointerLockActive);
-  const fallbackLookActive = useAppStore((state) => state.fallbackLookActive);
-  const gamePaused = useAppStore((state) => state.gamePaused);
+  const screen = useSessionStore((state) => state.screen);
   const visitedObjectIds = useProgressStore((state) => state.visitedObjectIds);
 
-  if ((!pointerLockActive && !fallbackLookActive) || gamePaused) {
+  if (screen !== 'exploring') {
     return null;
   }
 
