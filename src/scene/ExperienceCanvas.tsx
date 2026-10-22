@@ -8,6 +8,7 @@ import { FocusCameraRig } from '@/camera/FocusCameraRig';
 import '@/scene/three-catalog';
 import { createRenderer } from '@/engine/renderer/renderer-factory';
 import { InteractionManager } from '@/interaction/InteractionManager';
+import { setGamePointerLockTarget } from '@/player/pointer-lock-events';
 import { RoomShell } from '@/scene/RoomShell';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -39,6 +40,9 @@ export function ExperienceCanvas() {
         dpr={qualityProfile.dprRange}
         frameloop="always"
         camera={{ fov: 50, position: [0, 1.5, 4.5], near: 0.1, far: 100 }}
+        onCreated={({ gl }) => {
+          setGamePointerLockTarget(gl.domElement);
+        }}
         gl={async (props) =>
           createRenderer(props as Parameters<typeof createRenderer>[0], {
             preferredBackend: capabilities.preferredBackend,
