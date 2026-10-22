@@ -7,6 +7,19 @@
 - Habilita: [M1a/M1b](../adr/001-shell-hosting.md), editor y assets
 - Referencias: [room-document-v1](room-document-v1.md), [ADR-002](../adr/002-espacio-habitacion-portal.md)
 
+## 0. Estado de ejecución
+
+Actualizado: 2026-10-22.
+
+| Tarea | Estado | Notas |
+|---|---|---|
+| T0.1 Dominio | Hecha | `src/domain/room/{document,schema,budgets,rules,migrations,validation}.ts` + 5 suites |
+| T0.2 Semilla | Hecha | `src/content/seed/workspace-v1.ts` (4 nodos) |
+| T0.3 Prefabs | Parcial | Catálogo de metadata, costes y colisión; geometría pendiente |
+| T0.4 Renderer | Pendiente | Próximo incremento |
+| T0.5–T0.7, T0.9 | Pendientes | Sesión, limpieza y docs |
+| T0.8 Tooling | Parcial | Vitest, `test`/`check` y CI ejecutando pruebas; lint pendiente |
+
 ## 1. Objetivo
 
 Convertir la habitación hardcodeada en un **documento de datos** renderizado por un renderer genérico, con una **máquina de sesión** explícita y una **red de pruebas**. Sin backend, sin editor, sin assets, sin migración de shell.
