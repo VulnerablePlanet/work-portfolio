@@ -10,6 +10,12 @@ Estamos en **Fase 7 scaffold de CI/CD**, no en producto visual final. El reposit
 
 > Importante: en el estado actual **no existe backend**. Este repositorio es una aplicación frontend 3D servida por Vite. Si más adelante se agrega un backend/API, deberá documentarse como un servicio separado.
 
+## Arquitectura
+
+El código actual sigue en la fase descrita arriba. La arquitectura objetivo, las decisiones (ADR), el contrato del documento de habitación y el plan por fases están en [`docs/`](docs/README.md), empezando por [`docs/architecture/overview.md`](docs/architecture/overview.md).
+
+> Esa documentación describe lo que se va a construir; no debe leerse como estado implementado.
+
 ## Requisitos
 
 - Node.js 20+ recomendado.

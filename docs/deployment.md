@@ -1,5 +1,7 @@
 # Fase 7 — despliegue y CI/CD
 
+> **Documento histórico.** Describe el pipeline del estado anterior (Vite SPA + Lighthouse CI). La arquitectura objetivo y el nuevo hosting están en [`docs/architecture/overview.md`](architecture/overview.md) y [`docs/adr/001-shell-hosting.md`](adr/001-shell-hosting.md). Se actualizará en M1a.
+
 ## Estado
 
 Este proyecto queda preparado para CI/CD, pero **no queda desplegado automáticamente** hasta conectar un proveedor real: Vercel, Netlify o GitHub Pages.
