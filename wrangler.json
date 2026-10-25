@@ -7,6 +7,12 @@
   "observability": {
     "enabled": true
   },
+  "r2_buckets": [
+    {
+      "binding": "ROOM_SNAPSHOTS",
+      "bucket_name": "work-portfolio-snapshots"
+    }
+  ],
   "upload_source_maps": true,
   "vars": {
     "SUPABASE_URL": "",

@@ -1,30 +1,49 @@
 import type { LoaderFunctionArgs, MetaFunction } from 'react-router';
 import { Link, useLoaderData } from 'react-router';
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
-import {
-  DEMO_HANDLE,
-  DEMO_ROOM_SLUG,
-  DEMO_SPACE,
-} from '@/content/seed/demo-space';
 import { getInteractiveNodes } from '@/domain/room/selectors';
+import type { PublicSpace } from '@/lib/public-space';
+import { loadPublicRoom } from '@/lib/rooms.server';
 
-export function loader({ params }: LoaderFunctionArgs) {
-  if (params.handle !== DEMO_HANDLE || params.room !== DEMO_ROOM_SLUG) {
+export async function loader({ params, request, context }: LoaderFunctionArgs) {
+  const result = await loadPublicRoom(
+    request,
+    context,
+    params.handle ?? '',
+    params.room ?? '',
+  );
+
+  if (!result) {
     throw new Response('Habitación no encontrada', { status: 404 });
   }
 
-  return { space: DEMO_SPACE };
+  return result;
 }
 
-export const meta: MetaFunction = () => [
-  { title: `${DEMO_SPACE.room.title} — ${DEMO_SPACE.displayName}` },
-  { name: 'description', content: DEMO_SPACE.room.document.meta.summary },
-];
+export const meta: MetaFunction = ({ data }) => {
+  const result = data as
+    | { space?: PublicSpace; room?: PublicSpace['rooms'][number] }
+    | undefined;
+
+  return [
+    {
+      title: result?.room
+        ? `${result.room.title} — ${result.space?.displayName ?? 'work-portfolio'}`
+        : 'Habitación 3D — work-portfolio',
+    },
+    {
+      name: 'description',
+      content:
+        result?.room?.document.meta.summary ??
+        'Habitación 3D de un portafolio.',
+    },
+  ];
+};
 
 export default function RoomProfileRoute() {
-  const { space } = useLoaderData<typeof loader>();
-  const nodes = getInteractiveNodes(space.room.document);
-  const experiencePath = `/u/${space.handle}/${space.room.slug}/room`;
+  const { space, room } = useLoaderData<typeof loader>();
+  const nodes = getInteractiveNodes(room.document);
+  const experiencePath = `/u/${space.handle}/${room.slug}/room`;
 
   return (
     <>
@@ -32,11 +51,9 @@ export default function RoomProfileRoute() {
       <main className="profile-page">
         <section className="profile-hero">
           <p className="eyebrow">{space.displayName}</p>
-          <h1>{space.room.title}</h1>
+          <h1>{room.title}</h1>
           <p className="profile-hero__headline">{space.headline}</p>
-          <p className="profile-hero__summary">
-            {space.room.document.meta.summary}
-          </p>
+          <p className="profile-hero__summary">{room.document.meta.summary}</p>
           <div className="profile-actions">
             <Link to={experiencePath} className="button button--primary">
               Entrar a la habitación

@@ -6,9 +6,9 @@ Portfolio 3D profesional construido con React Router 7, Cloudflare Workers, Vite
 
 ## Estado actual
 
-Estamos en **M1a (shell y perfil público)**: la app migró a React Router 7 sobre Cloudflare Workers, el perfil público se renderiza en servidor (sin three en su bundle) y la experiencia 3D vive en una ruta cliente. La habitación se reconstruye desde [`src/content/seed/workspace-v1.ts`](src/content/seed/workspace-v1.ts). Quedan pendientes la autenticación real con Supabase y la publicación en base de datos (M1b), el editor (M2) y los assets reales.
+Estamos en **M1b (datos y publicación)**: la app corre sobre React Router 7 y Cloudflare Workers, el perfil público se renderiza en servidor sin three y la lectura pública ya soporta Supabase + R2 con fallback a la semilla. La capa de publicación valida el documento, escribe el snapshot y llama a la RPC transaccional. Quedan el editor (M2), los assets reales (M3) y probar el flujo completo contra un proyecto Supabase real.
 
-> Importante: todavía **no hay backend conectado**. El perfil y la habitación usan la semilla local. Supabase Auth, Postgres y R2 se conectan en M1b; ver [`docs/adr/001-shell-hosting.md`](docs/adr/001-shell-hosting.md).
+> Importante: el backend está implementado como migraciones y capa de servidor, pero **no hay un proyecto Supabase conectado en este entorno**. Sin `SUPABASE_URL`/`SUPABASE_ANON_KEY`, el handle `demo` usa la semilla local; ver [`supabase/README.md`](supabase/README.md).
 
 ## Arquitectura
 
@@ -50,7 +50,7 @@ Si el puerto `4173` está ocupado, la terminal mostrará la URL correcta.
 
 ## Backend
 
-Todavía **no hay backend conectado**. El perfil público y la habitación usan la semilla local; `/login` detecta si el Worker tiene `SUPABASE_URL` y `SUPABASE_ANON_KEY`, pero el flujo de sesión se habilita en M1b.
+El backend está implementado en código (migraciones, lectura DB+R2 y publicación transaccional), pero **no hay un proyecto Supabase conectado en este entorno**. Sin credenciales, el perfil público y la habitación usan la semilla local; `/login` detecta si el Worker tiene `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
 
 La arquitectura objetivo incluye Supabase (Auth, Postgres, RLS) para cuentas y publicación, Cloudflare R2 para assets y React Router 7 sobre Cloudflare Workers para el perfil público. Está documentado en [`docs/adr/001-shell-hosting.md`](docs/adr/001-shell-hosting.md) y [`docs/architecture/data-model.md`](docs/architecture/data-model.md).
 
@@ -71,6 +71,18 @@ npm run dev
 3. Añade el origen local o el dominio de producción a las Redirect URLs permitidas.
 
 Sin esas variables, el perfil público y la experiencia 3D funcionan igual; solo `/login` queda deshabilitado.
+
+### Base de datos y R2
+
+La migración inicial está en [`supabase/migrations/20261025000000_initial_schema.sql`](supabase/migrations/20261025000000_initial_schema.sql). Para aplicarla:
+
+```powershell
+npx supabase link --project-ref <project-ref>
+npx supabase db push
+npx wrangler r2 bucket create work-portfolio-snapshots
+```
+
+Los detalles están en [`supabase/README.md`](supabase/README.md). La lectura pública usa `spaces.published_manifest` + snapshots de R2; sin Supabase, el handle `demo` usa la semilla local.
 
 ## Comandos disponibles
 

@@ -1,8 +1,22 @@
 import { createRequestHandler, type ServerBuild } from 'react-router';
 
+interface R2ObjectLike {
+  text(): Promise<string>;
+}
+
+interface R2BucketLike {
+  get(key: string): Promise<R2ObjectLike | null>;
+  put(
+    key: string,
+    value: string,
+    options?: { httpMetadata?: { contentType?: string } },
+  ): Promise<unknown>;
+}
+
 interface Env {
   SUPABASE_URL?: string;
   SUPABASE_ANON_KEY?: string;
+  ROOM_SNAPSHOTS?: R2BucketLike;
 }
 
 interface ExecutionContext {

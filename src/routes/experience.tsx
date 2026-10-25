@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from 'react';
-import type { ClientLoaderFunctionArgs } from 'react-router';
+import type { LoaderFunctionArgs } from 'react-router';
 import { useLoaderData } from 'react-router';
 import {
   buildFallbackUrl,
@@ -10,7 +10,7 @@ import {
   renderBootStatus,
   updateBootStatus,
 } from '@/app/bootstrap/render-boot-status';
-import { WORKSPACE_SEED_V1 } from '@/content/seed/workspace-v1';
+import { loadRoomDocument } from '@/lib/rooms.server';
 import { useAppStore } from '@/store/useAppStore';
 import { useInteractionStore } from '@/store/useInteractionStore';
 import { useRoomStore } from '@/store/useRoomStore';
@@ -22,20 +22,23 @@ const ExperienceApp = lazy(async () => {
   return { default: module.App };
 });
 
-export function clientLoader(_args: ClientLoaderFunctionArgs) {
-  return { room: WORKSPACE_SEED_V1 };
-}
-
-export function HydrateFallback() {
-  return (
-    <div className="experience-boot">
-      <p>Cargando experiencia 3D…</p>
-    </div>
+export async function loader({ params, request, context }: LoaderFunctionArgs) {
+  const room = await loadRoomDocument(
+    request,
+    context,
+    params.handle ?? '',
+    params.room ?? '',
   );
+
+  if (!room) {
+    throw new Response('Habitación no encontrada', { status: 404 });
+  }
+
+  return { room };
 }
 
 export default function ExperienceRoute() {
-  const { room } = useLoaderData<typeof clientLoader>();
+  const { room } = useLoaderData<typeof loader>();
   const [ready, setReady] = useState(false);
 
   useEffect(() => {

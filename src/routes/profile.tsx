@@ -1,26 +1,45 @@
 import type { LoaderFunctionArgs, MetaFunction } from 'react-router';
 import { Link, useLoaderData } from 'react-router';
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
-import { DEMO_HANDLE, DEMO_SPACE } from '@/content/seed/demo-space';
 import { getInteractiveNodes } from '@/domain/room/selectors';
+import type { PublicSpace } from '@/lib/public-space';
+import { loadPublicSpace } from '@/lib/rooms.server';
 
-export function loader({ params }: LoaderFunctionArgs) {
-  if (params.handle !== DEMO_HANDLE) {
+export async function loader({ params, request, context }: LoaderFunctionArgs) {
+  const space = await loadPublicSpace(request, context, params.handle ?? '');
+
+  if (!space) {
     throw new Response('Perfil no encontrado', { status: 404 });
   }
 
-  return { space: DEMO_SPACE };
+  return { space };
 }
 
-export const meta: MetaFunction = () => [
-  { title: `${DEMO_SPACE.displayName} — ${DEMO_SPACE.title}` },
-  { name: 'description', content: DEMO_SPACE.summary },
-];
+export const meta: MetaFunction = ({ data }) => {
+  const space = (data as { space?: PublicSpace } | undefined)?.space;
+
+  return [
+    {
+      title: space
+        ? `${space.displayName} — ${space.title}`
+        : 'Perfil 3D — work-portfolio',
+    },
+    {
+      name: 'description',
+      content: space?.summary ?? 'Perfil de un espacio de trabajo 3D.',
+    },
+  ];
+};
 
 export default function ProfileRoute() {
   const { space } = useLoaderData<typeof loader>();
-  const nodes = getInteractiveNodes(space.room.document);
-  const experiencePath = `/u/${space.handle}/${space.room.slug}/room`;
+  const nodes = space.rooms.flatMap((room) =>
+    getInteractiveNodes(room.document),
+  );
+  const firstRoom = space.rooms[0];
+  const experiencePath = firstRoom
+    ? `/u/${space.handle}/${firstRoom.slug}/room`
+    : null;
 
   return (
     <>
@@ -32,49 +51,61 @@ export default function ProfileRoute() {
           <p className="profile-hero__headline">{space.headline}</p>
           <p className="profile-hero__summary">{space.summary}</p>
           <div className="profile-actions">
-            <Link to={experiencePath} className="button button--primary">
-              Entrar a la habitación
-            </Link>
-            <Link
-              to={`/u/${space.handle}/${space.room.slug}`}
-              className="button button--secondary"
-            >
-              Ver esta habitación
-            </Link>
+            {experiencePath ? (
+              <Link to={experiencePath} className="button button--primary">
+                Entrar a la habitación
+              </Link>
+            ) : null}
+            {firstRoom ? (
+              <Link
+                to={`/u/${space.handle}/${firstRoom.slug}`}
+                className="button button--secondary"
+              >
+                Ver esta habitación
+              </Link>
+            ) : null}
           </div>
         </section>
 
-        <section className="profile-section" aria-labelledby="habitacion">
+        <section className="profile-section" aria-labelledby="habitaciones">
           <div className="profile-section__header">
-            <h2 id="habitacion">Habitación</h2>
-            <span className="profile-section__hint">1 espacio</span>
+            <h2 id="habitaciones">Habitaciones</h2>
+            <span className="profile-section__hint">
+              {space.rooms.length} publicadas
+            </span>
           </div>
-          <div className="profile-room">
+          {space.rooms.length === 0 ? (
             <div className="profile-room__preview">
-              <p className="profile-card__eyebrow">Escena 3D</p>
-              <h3>{space.room.title}</h3>
-              <p>{space.room.document.meta.summary}</p>
-              <div className="profile-actions">
-                <Link to={experiencePath} className="button button--primary">
-                  Abrir en 3D
-                </Link>
-              </div>
+              <p className="profile-card__eyebrow">Sin publicaciones</p>
+              <h3>Este espacio todavía no tiene habitaciones publicadas.</h3>
+              <p>
+                Cuando el autor publique una habitación, aparecerá aquí con su
+                contenido y su enlace a la experiencia 3D.
+              </p>
             </div>
-            <div className="profile-room__meta">
-              <div>
-                <span>Render</span>
-                <strong>WebGPU / WebGL2</strong>
-              </div>
-              <div>
-                <span>Contenido</span>
-                <strong>{nodes.length} objetos interactivos</strong>
-              </div>
-              <div>
-                <span>Accesible</span>
-                <strong>Esta misma página, sin 3D</strong>
-              </div>
+          ) : (
+            <div className="profile-grid">
+              {space.rooms.map((room) => (
+                <article className="profile-card" key={room.slug}>
+                  <p className="profile-card__eyebrow">{room.purpose}</p>
+                  <h3>{room.title}</h3>
+                  <p>{room.document.meta.summary}</p>
+                  <ul className="profile-card__links">
+                    <li>
+                      <Link to={`/u/${space.handle}/${room.slug}`}>
+                        Ver habitación
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to={`/u/${space.handle}/${room.slug}/room`}>
+                        Abrir en 3D
+                      </Link>
+                    </li>
+                  </ul>
+                </article>
+              ))}
             </div>
-          </div>
+          )}
         </section>
 
         <section className="profile-section" aria-labelledby="contenido">
