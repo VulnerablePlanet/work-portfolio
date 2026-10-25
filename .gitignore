@@ -1,10 +1,16 @@
-﻿node_modules/
+node_modules/
 dist/
+build/
+.react-router/
+.wrangler/
 .DS_Store
 *.log
 coverage/
 .vite/
 .tmp/
 .lighthouseci/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
 # Local Pi runtime state
 .atl/

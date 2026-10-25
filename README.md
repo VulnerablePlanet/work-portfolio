@@ -2,17 +2,17 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Portfolio 3D profesional construido con Vite, TypeScript, React, React Three Fiber, Three.js WebGPU/WebGL2, Rapier, Zustand y GSAP.
+Portfolio 3D profesional construido con React Router 7, Cloudflare Workers, Vite, TypeScript, React, React Three Fiber, Three.js WebGPU/WebGL2, Rapier, Zustand y GSAP.
 
 ## Estado actual
 
-Estamos en **M0 (fundaciones)**: contrato `RoomDocument` validado con Zod, renderer data-driven, 12 prefabs, máquina de sesión y pruebas. La habitación actual se reconstruye desde [`src/content/seed/workspace-v1.ts`](src/content/seed/workspace-v1.ts), no desde JSX hardcodeado. El repositorio está publicado en GitHub (rama `main`) y la CI corre en cada push. Aún no hay backend, editor, assets reales GLB/KTX2 ni validación visual en hardware real; el siguiente hito es M1 (React Router 7 + Supabase).
+Estamos en **M1a (shell y perfil público)**: la app migró a React Router 7 sobre Cloudflare Workers, el perfil público se renderiza en servidor (sin three en su bundle) y la experiencia 3D vive en una ruta cliente. La habitación se reconstruye desde [`src/content/seed/workspace-v1.ts`](src/content/seed/workspace-v1.ts). Quedan pendientes la autenticación real con Supabase y la publicación en base de datos (M1b), el editor (M2) y los assets reales.
 
-> Importante: en el estado actual **no existe backend**. La arquitectura objetivo (M1) incorpora Supabase para auth, Postgres y publicación, y R2 para assets; ver [`docs/adr/001-shell-hosting.md`](docs/adr/001-shell-hosting.md).
+> Importante: todavía **no hay backend conectado**. El perfil y la habitación usan la semilla local. Supabase Auth, Postgres y R2 se conectan en M1b; ver [`docs/adr/001-shell-hosting.md`](docs/adr/001-shell-hosting.md).
 
 ## Arquitectura
 
-La arquitectura objetivo, las decisiones (ADR), el contrato del documento de habitación y el plan por fases están en [`docs/`](docs/README.md), empezando por [`docs/architecture/overview.md`](docs/architecture/overview.md). Lo implementado en M0 está descrito abajo y en [`docs/architecture/plan-m0.md`](docs/architecture/plan-m0.md).
+La arquitectura objetivo, las decisiones (ADR), el contrato del documento de habitación y el plan por fases están en [`docs/`](docs/README.md), empezando por [`docs/architecture/overview.md`](docs/architecture/overview.md).
 
 ## Requisitos
 
@@ -34,7 +34,7 @@ npm install
 
 ## Inicializar el frontend en desarrollo
 
-Este comando levanta el frontend con Vite:
+Este comando levanta React Router con el plugin de Cloudflare (el servidor corre en el runtime de Workers):
 
 ```powershell
 npm run dev
@@ -46,46 +46,63 @@ Luego abre:
 http://127.0.0.1:4173/
 ```
 
-Si Vite usa otro puerto porque `4173` está ocupado, la terminal mostrará la URL correcta.
+Si el puerto `4173` está ocupado, la terminal mostrará la URL correcta.
 
 ## Backend
 
-Actualmente **no hay backend que iniciar**. M0 se ejecuta íntegramente en el frontend y la habitación se carga desde la semilla local.
+Todavía **no hay backend conectado**. El perfil público y la habitación usan la semilla local; `/login` detecta si el Worker tiene `SUPABASE_URL` y `SUPABASE_ANON_KEY`, pero el flujo de sesión se habilita en M1b.
 
-La arquitectura objetivo sí incluye backend porque el producto es una plataforma multiusuario: Supabase (Auth, Postgres, RLS) para cuentas y publicación, Cloudflare R2 para assets, y React Router 7 sobre Cloudflare Workers para el perfil público. Ese trabajo empieza en M1 y está documentado en [`docs/adr/001-shell-hosting.md`](docs/adr/001-shell-hosting.md) y [`docs/architecture/data-model.md`](docs/architecture/data-model.md).
+La arquitectura objetivo incluye Supabase (Auth, Postgres, RLS) para cuentas y publicación, Cloudflare R2 para assets y React Router 7 sobre Cloudflare Workers para el perfil público. Está documentado en [`docs/adr/001-shell-hosting.md`](docs/adr/001-shell-hosting.md) y [`docs/architecture/data-model.md`](docs/architecture/data-model.md).
 
-Hasta M1, para correr el proyecto solo necesitas:
+Para correr el proyecto hoy solo necesitas:
 
 ```powershell
 npm install
 npm run dev
 ```
 
+### Autenticación
+
+`/login` envía un enlace mágico con Supabase Auth. Para probarlo:
+
+1. Copia [`.dev.vars.example`](.dev.vars.example) a `.dev.vars` y rellena `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
+2. En Supabase, configura la plantilla del email **Magic Link** para que apunte a:
+   `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email`
+3. Añade el origen local o el dominio de producción a las Redirect URLs permitidas.
+
+Sin esas variables, el perfil público y la experiencia 3D funcionan igual; solo `/login` queda deshabilitado.
+
 ## Comandos disponibles
 
 ```powershell
 npm install        # Instala dependencias
-npm run dev        # Inicia el frontend en modo desarrollo
-npm run typecheck  # Valida TypeScript sin generar build
-npm run lint       # Ejecuta ESLint sobre src
+npm run dev        # Inicia React Router + Cloudflare en desarrollo
+npm run typecheck  # Genera tipos de rutas y valida TypeScript
+npm run lint       # Ejecuta ESLint sobre src y workers
 npm run test       # Ejecuta las pruebas con Vitest
 npm run check      # typecheck + lint + tests
-npm run preview    # Sirve el contenido de dist/ si ya existe
+npm run build      # Build de cliente y servidor (React Router)
+npm run preview    # Build y preview del Worker en local
+npm run deploy     # Build y despliegue con Wrangler
 npm run lhci:local # Ejecuta Lighthouse CI local usando el script de Windows
 ```
 
 > Regla del proyecto: no ejecutar `npm run build` automáticamente después de cambios. El build queda reservado para CI o para una validación manual explícita.
 >
-> `npm run preview` y `npm run lhci:local` requieren que exista `dist/`. Si quieres auditar Lighthouse localmente, primero debes generar un build manualmente bajo tu criterio.
+> `npm run preview` y `npm run lhci:local` requieren que exista `build/client`. Si quieres auditar Lighthouse localmente, primero debes generar el build manualmente bajo tu criterio.
 
-## Rutas de prueba
+## Rutas
 
-Con el frontend corriendo:
+Con el servidor corriendo:
 
-- `http://127.0.0.1:4173/` — experiencia 3D normal.
-- `http://127.0.0.1:4173/?renderer=webgl2` — fuerza WebGL2.
-- `http://127.0.0.1:4173/?fallback=1` — fuerza fallback estático.
-- `http://127.0.0.1:4173/?failboot=1` — error controlado de bootstrap.
+- `http://127.0.0.1:4173/` — landing.
+- `http://127.0.0.1:4173/u/demo` — perfil público del espacio de ejemplo (SSR).
+- `http://127.0.0.1:4173/u/demo/estudio` — perfil de la habitación.
+- `http://127.0.0.1:4173/u/demo/estudio/room` — experiencia 3D.
+- `http://127.0.0.1:4173/u/demo/estudio/room?renderer=webgl2` — fuerza WebGL2.
+- `http://127.0.0.1:4173/u/demo/estudio/room?fallback=1` — fuerza fallback estático.
+- `http://127.0.0.1:4173/u/demo/estudio/room?failboot=1` — error controlado de bootstrap.
+- `http://127.0.0.1:4173/login` — estado de configuración de autenticación.
 - `http://127.0.0.1:4173/fallback.html` — fallback no-3D.
 
 ## Controles actuales
@@ -98,6 +115,9 @@ Con el frontend corriendo:
 
 ## Implementado
 
+- Shell React Router 7 sobre Cloudflare Workers (plugin de Vite + Wrangler).
+- Perfil público SSR (`/u/:handle`, `/u/:handle/:room`) sin three en su bundle.
+- Experiencia 3D en ruta cliente con carga diferida del bundle de three.
 - Contrato `RoomDocument` v1 con validación Zod, presupuestos y reglas de assets/portales.
 - Renderer data-driven: la sala, sus objetos y sus colisiones se derivan del documento, no de JSX hardcodeado.
 - 12 prefabs con geometría y catálogo de costes.
@@ -118,31 +138,32 @@ Con el frontend corriendo:
 - Mini mapa SVG y progreso persistido con Zustand, derivados del documento activo.
 - Feature flags para minimapa, progreso y service worker.
 - Fallback estático en `public/fallback.html`.
-- Service Worker básico para producción.
-- Pruebas con Vitest y CI con GitHub Actions, Lighthouse CI.
-- Documentación de arquitectura, ADR y contrato del documento.
+- Service Worker que no cachea navegaciones SSR.
+- Pruebas con Vitest, ESLint y CI con GitHub Actions + Lighthouse CI.
+- Documentación de arquitectura, ADR, contrato del documento y plan M0.
 
 ## CI-CD
 
 Archivos relevantes:
 
-- `.github/workflows/ci.yml` — `check` (typecheck + tests), build y Lighthouse CI.
-- `.lighthouserc.cjs` — budgets de performance/accessibility/SEO.
+- `.github/workflows/ci.yml` — `check` (typecheck + lint + tests), build de React Router y Lighthouse CI.
+- `.lighthouserc.cjs` — budgets de performance/accessibility/SEO sobre el Worker en preview.
 - `.lighthouserc.local.cjs` — variante local para Windows usando Chrome/Edge por remote debugging.
 - `scripts/run-lhci-local.ps1` — helper local de Lighthouse CI para Windows.
-- `docs/deployment.md` — notas del pipeline anterior.
-- `vite.config.ts` — code splitting manual por vendors principales.
+- `wrangler.json` — configuración del Worker y variables públicas.
+- `vite.config.ts` — React Router + Cloudflare Vite plugin.
 
 ## Qué falta para producto final
 
-1. **M1**: backend (Supabase), auth, publicación y perfil público SSR con React Router 7.
-2. **M2**: editor de habitación, paleta de prefabs y plantillas.
-3. **M3**: pipeline de assets GLB/KTX2, optimización y colisiones de usuario.
-4. **M4**: imagen → relieve L1.
-5. **M5**: multihabitación, portales y perfil agregado.
-6. Lazy zones, LOD/instancing y dispose sistemático.
-7. Validación manual en navegador y hardware real.
-8. Hosting según ADR-001: Cloudflare, Supabase y R2.
+1. **M1b**: Supabase Auth con cookies SSR, Postgres/RLS, publicación y snapshots en R2.
+2. **M1c**: registro abierto, Turnstile, cuotas y moderación.
+3. **M2**: editor de habitación, paleta de prefabs y plantillas.
+4. **M3**: pipeline de assets GLB/KTX2, optimización y colisiones de usuario.
+5. **M4**: imagen → relieve L1.
+6. **M5**: multihabitación, portales y perfil agregado.
+7. Lazy zones, LOD/instancing y dispose sistemático.
+8. Validación manual en navegador y hardware real.
+9. Hosting según ADR-001: Cloudflare, Supabase y R2.
 
 ## Licencia
 

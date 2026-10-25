@@ -35,3 +35,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
     }
   },
 }));
+
+export function resetSession(): void {
+  useSessionStore.setState(initialSessionState);
+}

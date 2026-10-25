@@ -18,11 +18,19 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "baseUrl": ".",
+    "rootDirs": [".", "./.react-router/types"],
     "paths": {
       "@/*": ["src/*"]
     }
   },
-  "include": ["src"],
+  "include": [
+    "src",
+    "workers",
+    "react-router.config.ts",
+    "vite.config.ts",
+    "vitest.config.ts",
+    ".react-router/types/**/*"
+  ],
   "references": []
 }
 

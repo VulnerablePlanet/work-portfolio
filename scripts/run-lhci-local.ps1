@@ -1,4 +1,4 @@
-﻿<#
+<#
   Ejecuta Lighthouse CI localmente en Windows conectándose a Chrome por
   remote debugging. Esto evita que Lighthouse/ChromeLauncher cree y destruya
   su propio perfil temporal, que en Windows suele fallar con EPERM/taskkill.
@@ -7,13 +7,13 @@
 $ErrorActionPreference = 'Stop'
 
 $root = Resolve-Path (Join-Path $PSScriptRoot '..')
-$dist = Join-Path $root 'dist'
+$build = Join-Path $root 'build\client'
 $localConfig = Join-Path $root '.lighthouserc.local.cjs'
 $chromeProfile = Join-Path $root '.tmp\lhci-chrome-profile'
 $port = 9222
 
-if (-not (Test-Path -LiteralPath $dist)) {
-  Write-Host 'No existe dist/. Para ejecutar Lighthouse local necesitas generar el build primero.' -ForegroundColor Yellow
+if (-not (Test-Path -LiteralPath $build)) {
+  Write-Host 'No existe build/client. Para ejecutar Lighthouse local necesitas generar el build primero.' -ForegroundColor Yellow
   Write-Host 'Comando manual: npm run build' -ForegroundColor Yellow
   Write-Host 'Nota: el agente no ejecuta build local por regla del proyecto; tú puedes hacerlo si quieres auditar localmente.' -ForegroundColor Yellow
   exit 1

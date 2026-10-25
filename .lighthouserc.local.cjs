@@ -1,8 +1,13 @@
 module.exports = {
   ci: {
     collect: {
-      staticDistDir: './dist',
-      url: ['http://localhost:4173/', 'http://localhost:4173/fallback.html'],
+      startServerCommand: 'npx vite preview --port 4173 --strictPort',
+      startServerReadyTimeout: 30000,
+      url: [
+        'http://localhost:4173/',
+        'http://localhost:4173/u/demo',
+        'http://localhost:4173/fallback.html',
+      ],
       numberOfRuns: 1,
       settings: {
         preset: 'desktop',

@@ -1,5 +1,5 @@
-﻿const CACHE_NAME = 'work-portfolio-static-v1';
-const STATIC_ASSETS = ['/', '/fallback.html'];
+const CACHE_NAME = 'work-portfolio-static-v2';
+const STATIC_ASSETS = ['/fallback.html', '/favicon.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -13,7 +13,11 @@ self.addEventListener('activate', (event) => {
     caches
       .keys()
       .then((keys) =>
-        Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))),
+        Promise.all(
+          keys
+            .filter((key) => key !== CACHE_NAME)
+            .map((key) => caches.delete(key)),
+        ),
       ),
   );
   self.clients.claim();
@@ -23,6 +27,12 @@ self.addEventListener('fetch', (event) => {
   const request = event.request;
 
   if (request.method !== 'GET') {
+    return;
+  }
+
+  // Las navegaciones (HTML SSR) siempre van a la red. Cachearlas servía
+  // versiones antiguas del perfil y del shell tras un despliegue.
+  if (request.mode === 'navigate') {
     return;
   }
 
