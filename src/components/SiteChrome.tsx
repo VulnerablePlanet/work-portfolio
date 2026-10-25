@@ -14,6 +14,7 @@ export function SiteHeader() {
           <Link to={`/u/${DEMO_HANDLE}`}>Perfil</Link>
           <Link to={`/u/${DEMO_HANDLE}/${DEMO_ROOM_SLUG}`}>Habitación</Link>
           <Link to="/login">Entrar</Link>
+          <Link to="/settings">Cuenta</Link>
         </nav>
       </div>
     </header>
@@ -27,6 +28,12 @@ export function SiteFooter() {
         Proyecto open source con licencia MIT. Construido con React Router,
         React Three Fiber, Three.js y Rapier.
       </p>
+      <nav className="profile-footer__links" aria-label="Legal">
+        <Link to="/terms">Términos</Link>
+        <Link to="/privacy">Privacidad</Link>
+        <Link to="/content-policy">Política de contenido</Link>
+        <Link to="/settings">Cuenta</Link>
+      </nav>
     </footer>
   );
 }

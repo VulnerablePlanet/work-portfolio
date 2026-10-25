@@ -85,6 +85,7 @@ async function loadPublishedRooms(
     try {
       const document = parseRoomDocument(JSON.parse(await object.text()));
       rooms.push({
+        id: entry.roomId,
         slug: entry.slug,
         title: entry.title,
         purpose: loadPurpose(entry.purpose),

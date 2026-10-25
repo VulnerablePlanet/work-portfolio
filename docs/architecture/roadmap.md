@@ -119,5 +119,6 @@ El coste de L2 no está incluido: depende del proveedor y de la cuota. No se abr
 - M0: **ejecutado** (2026-10-22): dominio, renderer data-driven, sesión, tooling y limpieza. Ver [plan-m0.md](plan-m0.md).
 - M1a: **shell, perfiles SSR y experiencia 3D migrados**; auth OTP con Supabase implementada, pendiente de probar contra un proyecto real y de cerrar el ciclo de sesión/logout.
 - M1b: **esquema Supabase, RLS, lectura pública DB+R2 y función de publicación implementados**; falta la UI del editor y validar migraciones contra un proyecto real.
+- M1c: **Turnstile, cuotas, rate limits, reportes, auto-ocultado, cola de moderación, borrado de cuenta y páginas legales implementados**; falta probarlos contra Supabase real.
 - M2–M7: diseñados, no implementados.
 - Decisiones: [ADR-001](../adr/001-shell-hosting.md) a [ADR-007](../adr/007-telemetria-y-privacidad.md).

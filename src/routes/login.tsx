@@ -5,7 +5,13 @@ import type {
 } from 'react-router';
 import { data, Link, useActionData, useLoaderData } from 'react-router';
 import { SiteFooter, SiteHeader } from '@/components/SiteChrome';
+import { TurnstileWidget } from '@/components/TurnstileWidget';
+import { consumeRateLimit } from '@/lib/rate-limit.server';
+import { getClientIp } from '@/lib/supabase-admin.server';
 import { createSupabaseServerClient } from '@/lib/supabase.server';
+import { verifyTurnstile } from '@/lib/turnstile.server';
+
+const TERMS_VERSION = '2026-10-25';
 
 interface LoginResult {
   ok: boolean;
@@ -18,11 +24,26 @@ export function loader({ request, context }: LoaderFunctionArgs) {
 
   return {
     configured: Boolean(env.SUPABASE_URL && env.SUPABASE_ANON_KEY),
+    turnstileSiteKey: env.TURNSTILE_SITE_KEY || null,
     error: url.searchParams.get('error'),
   };
 }
 
 export async function action({ request, context }: ActionFunctionArgs) {
+  const env = context.cloudflare.env;
+  const allowed = await consumeRateLimit(request, context, 'login', 10, 3600);
+
+  if (!allowed) {
+    return data<LoginResult>(
+      {
+        ok: false,
+        message:
+          'Demasiados intentos desde esta conexión. Espera una hora e inténtalo de nuevo.',
+      },
+      { status: 429 },
+    );
+  }
+
   const supabase = createSupabaseServerClient(request, context);
 
   if (!supabase) {
@@ -38,6 +59,35 @@ export async function action({ request, context }: ActionFunctionArgs) {
 
   const formData = await request.formData();
   const email = String(formData.get('email') ?? '').trim();
+  const acceptedTerms = formData.get('terms') === 'on';
+  const turnstileToken = formData.get('cf-turnstile-response');
+
+  if (!acceptedTerms) {
+    return data<LoginResult>(
+      {
+        ok: false,
+        message:
+          'Debes aceptar los términos, la política de contenido y la privacidad.',
+      },
+      { status: 400, headers: supabase.responseHeaders },
+    );
+  }
+
+  const human = await verifyTurnstile(
+    typeof turnstileToken === 'string' ? turnstileToken : null,
+    env.TURNSTILE_SECRET_KEY,
+    getClientIp(request),
+  );
+
+  if (!human) {
+    return data<LoginResult>(
+      {
+        ok: false,
+        message: 'Completa la verificación anti-bot e inténtalo de nuevo.',
+      },
+      { status: 400, headers: supabase.responseHeaders },
+    );
+  }
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return data<LoginResult>(
@@ -52,6 +102,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
     options: {
       emailRedirectTo: redirectTo,
       shouldCreateUser: true,
+      data: { terms_version: TERMS_VERSION },
     },
   });
 
@@ -81,7 +132,8 @@ export const meta: MetaFunction = () => [
 ];
 
 export default function LoginRoute() {
-  const { configured, error } = useLoaderData<typeof loader>();
+  const { configured, turnstileSiteKey, error } =
+    useLoaderData<typeof loader>();
   const result = useActionData<typeof action>();
 
   return (
@@ -126,6 +178,30 @@ export default function LoginRoute() {
                 required
                 placeholder="tu@email.com"
               />
+
+              {turnstileSiteKey ? (
+                <TurnstileWidget siteKey={turnstileSiteKey} />
+              ) : null}
+
+              <label className="login-checkbox">
+                <input type="checkbox" name="terms" required />
+                <span>
+                  Acepto los{' '}
+                  <Link to="/terms" target="_blank">
+                    términos
+                  </Link>
+                  , la{' '}
+                  <Link to="/content-policy" target="_blank">
+                    política de contenido
+                  </Link>{' '}
+                  y la{' '}
+                  <Link to="/privacy" target="_blank">
+                    privacidad
+                  </Link>
+                  .
+                </span>
+              </label>
+
               <button type="submit" className="button button--primary">
                 Enviar enlace de acceso
               </button>

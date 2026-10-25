@@ -9,6 +9,7 @@ export type RoomPurpose =
   | 'custom';
 
 export interface PublicRoom {
+  id: string;
   slug: string;
   title: string;
   purpose: RoomPurpose;

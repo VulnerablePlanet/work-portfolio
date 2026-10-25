@@ -447,3 +447,215 @@ as $$
     where id = auth.uid() and role = 'admin'
   );
 $$;
+
+-- ---------------------------------------------------------------------------
+-- M1c: cuotas, rate limits y reportes
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.api_rate_limits (
+  key text not null,
+  window_start timestamptz not null,
+  count integer not null default 0,
+  primary key (key, window_start)
+);
+
+alter table public.api_rate_limits enable row level security;
+revoke all on public.api_rate_limits from anon, authenticated;
+
+create or replace function public.consume_rate_limit(
+  p_key text,
+  p_limit integer,
+  p_window_seconds integer
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_window timestamptz;
+  v_count integer;
+begin
+  if p_limit <= 0 or p_window_seconds <= 0 then
+    return false;
+  end if;
+
+  v_window := to_timestamp(
+    floor(extract(epoch from now()) / p_window_seconds) * p_window_seconds
+  );
+
+  insert into public.api_rate_limits (key, window_start, count)
+  values (p_key, v_window, 1)
+  on conflict (key, window_start)
+  do update set count = public.api_rate_limits.count + 1
+  returning count into v_count;
+
+  return v_count <= p_limit;
+end;
+$$;
+
+revoke all on function public.consume_rate_limit(text, integer, integer)
+  from public, anon, authenticated;
+grant execute on function public.consume_rate_limit(text, integer, integer)
+  to service_role;
+
+create or replace function public.enforce_room_quota()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if (
+    select count(*) from public.rooms where owner_id = new.owner_id
+  ) >= 8 then
+    raise exception 'room_quota_exceeded';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists rooms_enforce_quota on public.rooms;
+create trigger rooms_enforce_quota
+  before insert on public.rooms
+  for each row execute function public.enforce_room_quota();
+
+create or replace function public.sync_room_quota()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_owner uuid;
+begin
+  v_owner := coalesce(new.owner_id, old.owner_id);
+
+  update public.quotas
+  set room_count = (
+    select count(*) from public.rooms where owner_id = v_owner
+  ),
+  updated_at = now()
+  where owner_id = v_owner;
+
+  if tg_op = 'DELETE' then
+    return old;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists rooms_sync_quota on public.rooms;
+create trigger rooms_sync_quota
+  after insert or delete on public.rooms
+  for each row execute function public.sync_room_quota();
+
+create or replace function public.enforce_asset_quota()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_count integer;
+  v_bytes bigint;
+begin
+  select count(*), coalesce(sum(bytes), 0)
+  into v_count, v_bytes
+  from public.assets
+  where owner_id = new.owner_id
+    and id <> new.id;
+
+  if tg_op = 'INSERT' and v_count >= 25 then
+    raise exception 'asset_quota_exceeded';
+  end if;
+
+  if v_bytes + new.bytes > 26214400 then
+    raise exception 'asset_storage_exceeded';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists assets_enforce_quota on public.assets;
+create trigger assets_enforce_quota
+  before insert or update of bytes, owner_id on public.assets
+  for each row execute function public.enforce_asset_quota();
+
+create or replace function public.sync_asset_quota()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_owner uuid;
+begin
+  v_owner := coalesce(new.owner_id, old.owner_id);
+
+  update public.quotas
+  set asset_count = (
+    select count(*) from public.assets where owner_id = v_owner
+  ),
+  asset_bytes = (
+    select coalesce(sum(bytes), 0) from public.assets where owner_id = v_owner
+  ),
+  updated_at = now()
+  where owner_id = v_owner;
+
+  if tg_op = 'DELETE' then
+    return old;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists assets_sync_quota on public.assets;
+create trigger assets_sync_quota
+  after insert or delete or update of bytes on public.assets
+  for each row execute function public.sync_asset_quota();
+
+create or replace function public.handle_new_report()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_open integer;
+begin
+  select count(*) into v_open
+  from public.reports
+  where room_id = new.room_id and status = 'open';
+
+  if v_open >= 3 then
+    update public.rooms
+    set visibility = 'suspended', updated_at = now()
+    where id = new.room_id
+      and visibility in ('published', 'unlisted');
+
+    if found then
+      insert into public.moderation_actions (room_id, action, notes)
+      values (
+        new.room_id,
+        'hide',
+        'Auto-ocultado tras 3 reportes abiertos'
+      );
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists reports_auto_hide on public.reports;
+create trigger reports_auto_hide
+  after insert on public.reports
+  for each row execute function public.handle_new_report();
+
+create index if not exists rate_limits_window_idx
+  on public.api_rate_limits (window_start);

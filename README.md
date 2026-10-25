@@ -6,7 +6,7 @@ Portfolio 3D profesional construido con React Router 7, Cloudflare Workers, Vite
 
 ## Estado actual
 
-Estamos en **M1b (datos y publicación)**: la app corre sobre React Router 7 y Cloudflare Workers, el perfil público se renderiza en servidor sin three y la lectura pública ya soporta Supabase + R2 con fallback a la semilla. La capa de publicación valida el documento, escribe el snapshot y llama a la RPC transaccional. Quedan el editor (M2), los assets reales (M3) y probar el flujo completo contra un proyecto Supabase real.
+Estamos en **M1c (registro abierto)**: React Router 7 sobre Cloudflare Workers, perfil público SSR, lectura Supabase + R2 con fallback a la semilla, auth OTP con Turnstile, cuotas y rate limits en base de datos, reportes con auto-ocultado a 3 reportes, cola de moderación, borrado de cuenta y páginas legales. Queda el editor (M2) y validar todo el flujo contra un proyecto Supabase real.
 
 > Importante: el backend está implementado como migraciones y capa de servidor, pero **no hay un proyecto Supabase conectado en este entorno**. Sin `SUPABASE_URL`/`SUPABASE_ANON_KEY`, el handle `demo` usa la semilla local; ver [`supabase/README.md`](supabase/README.md).
 
@@ -65,10 +65,11 @@ npm run dev
 
 `/login` envía un enlace mágico con Supabase Auth. Para probarlo:
 
-1. Copia [`.dev.vars.example`](.dev.vars.example) a `.dev.vars` y rellena `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
+1. Copia [`.dev.vars.example`](.dev.vars.example) a `.dev.vars` y rellena `SUPABASE_URL`, `SUPABASE_ANON_KEY` y `SUPABASE_SERVICE_ROLE_KEY`.
 2. En Supabase, configura la plantilla del email **Magic Link** para que apunte a:
    `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email`
 3. Añade el origen local o el dominio de producción a las Redirect URLs permitidas.
+4. Configura `TURNSTILE_SITE_KEY` y `TURNSTILE_SECRET_KEY`. En local puedes usar las claves de prueba de Cloudflare incluidas en `.dev.vars.example`.
 
 Sin esas variables, el perfil público y la experiencia 3D funcionan igual; solo `/login` queda deshabilitado.
 
@@ -83,6 +84,13 @@ npx wrangler r2 bucket create work-portfolio-snapshots
 ```
 
 Los detalles están en [`supabase/README.md`](supabase/README.md). La lectura pública usa `spaces.published_manifest` + snapshots de R2; sin Supabase, el handle `demo` usa la semilla local.
+
+### Moderación y cuenta
+
+- Cualquier visitante puede reportar una habitación publicada desde su perfil; 3 reportes abiertos la ocultan automáticamente.
+- `/admin` es la cola de moderación; requiere `profiles.role = 'admin'`.
+- `/settings` permite borrar la cuenta (perfil, espacios, habitaciones, versiones y assets) con `SUPABASE_SERVICE_ROLE_KEY`.
+- `/terms`, `/privacy` y `/content-policy` son borradores operativos; deben revisarse antes de producción.
 
 ## Comandos disponibles
 
@@ -130,6 +138,12 @@ Con el servidor corriendo:
 - Shell React Router 7 sobre Cloudflare Workers (plugin de Vite + Wrangler).
 - Perfil público SSR (`/u/:handle`, `/u/:handle/:room`) sin three en su bundle.
 - Experiencia 3D en ruta cliente con carga diferida del bundle de three.
+- Supabase: migración de perfiles, espacios, habitaciones, versiones, assets, cuotas y moderación; lectura pública DB + R2 con fallback a la semilla.
+- Publicación validada: propiedad, assets, portales, presupuestos, snapshot en R2 y RPC transaccional.
+- Auth OTP con cookies SSR, Turnstile y aceptación de términos.
+- Rate limits por IP, cuotas de habitaciones/assets y auto-ocultado a 3 reportes.
+- Cola de moderación en `/admin` y borrado de cuenta en `/settings`.
+- Páginas legales: términos, privacidad y política de contenido.
 - Contrato `RoomDocument` v1 con validación Zod, presupuestos y reglas de assets/portales.
 - Renderer data-driven: la sala, sus objetos y sus colisiones se derivan del documento, no de JSX hardcodeado.
 - 12 prefabs con geometría y catálogo de costes.
@@ -151,8 +165,8 @@ Con el servidor corriendo:
 - Feature flags para minimapa, progreso y service worker.
 - Fallback estático en `public/fallback.html`.
 - Service Worker que no cachea navegaciones SSR.
-- Pruebas con Vitest, ESLint y CI con GitHub Actions + Lighthouse CI.
-- Documentación de arquitectura, ADR, contrato del documento y plan M0.
+- Pruebas con Vitest (57), ESLint y CI con GitHub Actions + Lighthouse CI.
+- Documentación de arquitectura, ADR, contrato del documento y planes M0/M1.
 
 ## CI-CD
 
@@ -167,15 +181,14 @@ Archivos relevantes:
 
 ## Qué falta para producto final
 
-1. **M1b**: Supabase Auth con cookies SSR, Postgres/RLS, publicación y snapshots en R2.
-2. **M1c**: registro abierto, Turnstile, cuotas y moderación.
-3. **M2**: editor de habitación, paleta de prefabs y plantillas.
-4. **M3**: pipeline de assets GLB/KTX2, optimización y colisiones de usuario.
-5. **M4**: imagen → relieve L1.
-6. **M5**: multihabitación, portales y perfil agregado.
-7. Lazy zones, LOD/instancing y dispose sistemático.
-8. Validación manual en navegador y hardware real.
-9. Hosting según ADR-001: Cloudflare, Supabase y R2.
+1. Validar migraciones, auth, publicación y moderación contra un proyecto Supabase real.
+2. **M2**: editor de habitación, paleta de prefabs y plantillas.
+3. **M3**: pipeline de assets GLB/KTX2, optimización y colisiones de usuario.
+4. **M4**: imagen → relieve L1.
+5. **M5**: multihabitación, portales y perfil agregado.
+6. Lazy zones, LOD/instancing y dispose sistemático.
+7. Validación manual en navegador y hardware real.
+8. Hosting según ADR-001: Cloudflare, Supabase y R2.
 
 ## Licencia
 

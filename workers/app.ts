@@ -16,6 +16,9 @@ interface R2BucketLike {
 interface Env {
   SUPABASE_URL?: string;
   SUPABASE_ANON_KEY?: string;
+  SUPABASE_SERVICE_ROLE_KEY?: string;
+  TURNSTILE_SITE_KEY?: string;
+  TURNSTILE_SECRET_KEY?: string;
   ROOM_SNAPSHOTS?: R2BucketLike;
 }
 

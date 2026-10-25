@@ -13,6 +13,7 @@ export const DEMO_SPACE: PublicSpace = {
     'Espacio de trabajo de ejemplo: una habitación 3D con proyectos, skills y una consola de arquitectura. Es la semilla que cada usuario podrá personalizar en el editor.',
   rooms: [
     {
+      id: 'demo-estudio',
       slug: DEMO_ROOM_SLUG,
       title: 'Estudio',
       purpose: 'about',
